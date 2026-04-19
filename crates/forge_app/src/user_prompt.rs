@@ -5,7 +5,7 @@ use forge_domain::{Agent, *};
 use serde_json::json;
 use tracing::debug;
 
-use crate::{AttachmentService, EnvironmentInfra, TemplateEngine, TerminalContextService};
+use crate::{AttachmentService, EnvironmentInfra, TemplateEngine};
 
 /// Service responsible for setting user prompts in the conversation context
 #[derive(Clone)]
@@ -177,13 +177,6 @@ impl<S: AttachmentService + EnvironmentInfra<Config = forge_config::ForgeConfig>
                 }
                 None => event_context,
             };
-
-            // Inject terminal context into the event context when available.
-            let event_context =
-                match TerminalContextService::new(self.services.clone()).get_terminal_context() {
-                    Some(ctx) => event_context.terminal_context(Some(ctx)),
-                    None => event_context,
-                };
 
             // Render the event value into agent's user prompt template.
             Some(

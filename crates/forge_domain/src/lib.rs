@@ -43,7 +43,6 @@ mod suggestion;
 mod system_context;
 mod temperature;
 mod template;
-mod terminal_context;
 mod tools;
 
 mod tool_order;
@@ -99,7 +98,6 @@ pub use suggestion::*;
 pub use system_context::*;
 pub use temperature::*;
 pub use template::*;
-pub use terminal_context::*;
 pub use tool_order::*;
 pub use tools::*;
 pub use top_k::*;

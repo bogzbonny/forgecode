@@ -1,9 +1,5 @@
 //! NOTE: Always use singular names for commands and subcommands.
 //! For example: `forge provider login` instead of `forge providers login`.
-//!
-//! NOTE: With every change to this CLI structure, verify that the ZSH plugin
-//! remains compatible. The plugin at `shell-plugin/forge.plugin.zsh` implements
-//! shell completion and command shortcuts that depend on the CLI structure.
 
 use std::path::PathBuf;
 
@@ -82,10 +78,6 @@ pub enum TopLevelCommand {
     /// Manage agents.
     Agent(AgentCommandGroup),
 
-    /// Generate shell extension scripts.
-    #[command(subcommand, alias = "extension")]
-    Zsh(ZshCommandGroup),
-
     /// List agents, models, providers, tools, or MCP servers.
     List(ListCommandGroup),
 
@@ -141,13 +133,6 @@ pub enum TopLevelCommand {
 
     /// Update forge to the latest version.
     Update(UpdateArgs),
-
-    /// Setup zsh integration by updating .zshrc with plugin and theme (alias
-    /// for `zsh setup`).
-    Setup,
-
-    /// Run diagnostics on shell environment (alias for `zsh doctor`).
-    Doctor,
 }
 
 /// Command group for custom command management.
@@ -373,37 +358,6 @@ pub enum ListCommand {
     /// and outputs one path per line. Directories are suffixed with `/`.
     #[command(alias = "files")]
     File,
-}
-
-/// Shell extension commands.
-#[derive(Subcommand, Debug, Clone)]
-pub enum ZshCommandGroup {
-    /// Generate shell plugin script
-    Plugin,
-    /// Generate shell theme
-    Theme,
-    /// Run diagnostics on shell environment
-    Doctor,
-
-    /// Get rprompt information (model and conversation stats) for shell
-    /// integration.
-    Rprompt,
-
-    /// Setup zsh integration by updating .zshrc with plugin and theme
-    Setup,
-
-    /// Show keyboard shortcuts for ZSH line editor
-    Keyboard,
-
-    /// Format buffer text by wrapping file paths in @[...] syntax.
-    ///
-    /// Used by the zsh plugin to delegate path detection and wrapping to
-    /// Rust where the logic is well-tested across all terminal environments.
-    Format {
-        /// The text buffer to format.
-        #[arg(long)]
-        buffer: String,
-    },
 }
 
 /// Command group for MCP server management.
@@ -1433,16 +1387,6 @@ mod tests {
     }
 
     #[test]
-    fn test_prompt_command() {
-        let fixture = Cli::parse_from(["forge", "zsh", "rprompt"]);
-        let r_prompt = matches!(
-            fixture.subcommands,
-            Some(TopLevelCommand::Zsh(ZshCommandGroup::Rprompt))
-        );
-        assert!(r_prompt);
-    }
-
-    #[test]
     fn test_session_alias_dump() {
         let fixture = Cli::parse_from([
             "forge",
@@ -1695,92 +1639,6 @@ mod tests {
     fn test_prompt_with_double_hyphen() {
         let fixture = Cli::parse_from(["forge", "-p", "--something"]);
         assert_eq!(fixture.prompt, Some("--something".to_string()));
-    }
-
-    #[test]
-    fn test_terminal_theme_zsh() {
-        let fixture = Cli::parse_from(["forge", "zsh", "theme"]);
-        let actual = match fixture.subcommands {
-            Some(TopLevelCommand::Zsh(terminal)) => {
-                matches!(terminal, ZshCommandGroup::Theme)
-            }
-            _ => false,
-        };
-        assert_eq!(actual, true);
-    }
-
-    #[test]
-    fn test_terminal_plugin_zsh() {
-        let fixture = Cli::parse_from(["forge", "zsh", "plugin"]);
-        let actual = match fixture.subcommands {
-            Some(TopLevelCommand::Zsh(terminal)) => {
-                matches!(terminal, ZshCommandGroup::Plugin)
-            }
-            _ => false,
-        };
-        assert_eq!(actual, true);
-    }
-
-    #[test]
-    fn test_zsh_doctor() {
-        let fixture = Cli::parse_from(["forge", "zsh", "doctor"]);
-        let actual = match fixture.subcommands {
-            Some(TopLevelCommand::Zsh(terminal)) => {
-                matches!(terminal, ZshCommandGroup::Doctor)
-            }
-            _ => false,
-        };
-        assert_eq!(actual, true);
-    }
-
-    #[test]
-    fn test_zsh_setup() {
-        let fixture = Cli::parse_from(["forge", "zsh", "setup"]);
-        let actual = match fixture.subcommands {
-            Some(TopLevelCommand::Zsh(terminal)) => {
-                matches!(terminal, ZshCommandGroup::Setup)
-            }
-            _ => false,
-        };
-        assert_eq!(actual, true);
-    }
-
-    #[test]
-    fn test_zsh_keyboard() {
-        let fixture = Cli::parse_from(["forge", "zsh", "keyboard"]);
-        let actual = match fixture.subcommands {
-            Some(TopLevelCommand::Zsh(terminal)) => {
-                matches!(terminal, ZshCommandGroup::Keyboard)
-            }
-            _ => false,
-        };
-        assert_eq!(actual, true);
-    }
-
-    #[test]
-    fn test_zsh_format() {
-        let fixture = Cli::parse_from(["forge", "zsh", "format", "--buffer", "hello world"]);
-        let actual = match fixture.subcommands {
-            Some(TopLevelCommand::Zsh(ZshCommandGroup::Format { buffer })) => {
-                buffer == "hello world"
-            }
-            _ => false,
-        };
-        assert_eq!(actual, true);
-    }
-
-    #[test]
-    fn test_setup_alias() {
-        let fixture = Cli::parse_from(["forge", "setup"]);
-        let actual = matches!(fixture.subcommands, Some(TopLevelCommand::Setup));
-        assert_eq!(actual, true);
-    }
-
-    #[test]
-    fn test_doctor_alias() {
-        let fixture = Cli::parse_from(["forge", "doctor"]);
-        let actual = matches!(fixture.subcommands, Some(TopLevelCommand::Doctor));
-        assert_eq!(actual, true);
     }
 
     #[test]

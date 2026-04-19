@@ -5,13 +5,13 @@ use crossterm::event::Event;
 use forge_api::Environment;
 use nu_ansi_term::{Color, Style};
 use reedline::{
-    ColumnarMenu, DefaultHinter, EditCommand, EditMode, Emacs, FileBackedHistory, KeyCode,
-    KeyModifiers, MenuBuilder, PromptEditMode, Reedline, ReedlineEvent, ReedlineMenu,
-    ReedlineRawEvent, Signal, default_emacs_keybindings,
+    default_emacs_keybindings, ColumnarMenu, DefaultHinter, EditCommand, EditMode, Emacs,
+    FileBackedHistory, KeyCode, KeyModifiers, MenuBuilder, PromptEditMode, Reedline, ReedlineEvent,
+    ReedlineMenu, ReedlineRawEvent, Signal,
 };
 
 use super::completer::InputCompleter;
-use super::zsh::paste::wrap_pasted_text;
+use super::paste::wrap_pasted_text;
 use crate::highlighter::ForgeHighlighter;
 use crate::model::ForgeCommandManager;
 use crate::prompt::ForgePrompt;
