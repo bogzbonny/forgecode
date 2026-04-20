@@ -30,8 +30,8 @@ where
         provider_id: ProviderId,
         auth_method: AuthMethod,
     ) -> anyhow::Result<AuthContextRequest> {
-        // Get required URL parameters for API key flow and Google ADC
-        let required_params = if matches!(auth_method, AuthMethod::ApiKey | AuthMethod::GoogleAdc) {
+        // Get required URL parameters for API key flow
+        let required_params = if matches!(auth_method, AuthMethod::ApiKey) {
             // Get URL params from provider entry (works for both configured and
             // unconfigured)
             let providers = self.infra.get_all_providers().await?;
@@ -52,22 +52,14 @@ where
         )?;
         let mut request = strategy.init().await?;
 
-        // For API key flow and Google ADC, attach existing credential if available
+        // For API key flow, attach existing credential if available
         if let AuthContextRequest::ApiKey(ref mut api_key_request) = request
             && let Ok(Some(existing_credential)) = self.infra.get_credential(&provider_id).await
         {
             api_key_request.existing_params = Some(existing_credential.url_params.into());
 
-            // Only prefill API key if it's not the internal Google ADC marker when asking
-            // for regular API Key This allows switching from ADC -> API Key
-            // without prefilling the marker
             if let Some(key) = existing_credential.auth_details.api_key() {
-                let is_adc_marker = key.as_ref() == "google_adc_marker";
-                let requesting_adc = matches!(auth_method, AuthMethod::GoogleAdc);
-
-                if (requesting_adc && is_adc_marker) || (!requesting_adc && !is_adc_marker) {
-                    api_key_request.api_key = Some(key.clone());
-                }
+                api_key_request.api_key = Some(key.clone());
             }
         }
 
@@ -138,9 +130,7 @@ where
                 for auth_method in &provider.auth_methods {
                     match auth_method {
                         AuthMethod::OAuthDevice(_)
-                        | AuthMethod::OAuthCode(_)
-                        | AuthMethod::CodexDevice(_)
-                        | AuthMethod::GoogleAdc => {
+                        | AuthMethod::OAuthCode(_) => {
                             // Get existing credential
                             let existing_credential =
                                 self.infra.get_credential(&provider.id).await?.ok_or_else(

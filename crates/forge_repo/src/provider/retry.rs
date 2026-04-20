@@ -1,5 +1,4 @@
 use forge_app::domain::Error as DomainError;
-use forge_app::dto::anthropic::Error as AnthropicError;
 use forge_app::dto::openai::{Error, ErrorCode, ErrorResponse};
 use forge_config::RetryConfig;
 
@@ -19,21 +18,12 @@ pub fn into_retry(error: anyhow::Error, retry_config: &RetryConfig) -> anyhow::E
         || is_req_transport_error(&error)
         || is_event_transport_error(&error)
         || is_empty_error(&error)
-        || is_anthropic_overloaded_error(&error)
         || is_openai_overloaded_error(&error)
     {
         return DomainError::Retryable(error).into();
     }
 
     error
-}
-
-/// Checks if the error is an Anthropic `overloaded_error`, which arrives as an
-/// SSE event payload rather than an HTTP status code and must be retried.
-fn is_anthropic_overloaded_error(error: &anyhow::Error) -> bool {
-    error
-        .downcast_ref::<AnthropicError>()
-        .is_some_and(|e| matches!(e, AnthropicError::OverloadedError { .. }))
 }
 
 fn get_api_status_code(error: &anyhow::Error) -> Option<u16> {
@@ -353,21 +343,6 @@ mod tests {
             ErrorResponse::default().code(ErrorCode::String("rate_limit".to_string())),
         ));
 
-        assert!(!is_retryable(into_retry(error, &retry_config)));
-    }
-
-    #[test]
-    fn test_anthropic_overloaded_error_is_retryable() {
-        let retry_config = fixture_retry_config(vec![]);
-
-        // overloaded_error arriving as an SSE event must be retried
-        let error = anyhow::Error::from(AnthropicError::OverloadedError {
-            message: "Overloaded".to_string(),
-        });
-        assert!(is_retryable(into_retry(error, &retry_config)));
-
-        // Generic errors are still not retryable
-        let error = anyhow!("Generic error");
         assert!(!is_retryable(into_retry(error, &retry_config)));
     }
 

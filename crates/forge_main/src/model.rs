@@ -1227,10 +1227,10 @@ mod tests {
 
     #[test]
     fn test_cli_model_display_with_large_context() {
-        let fixture = create_model_fixture("claude-3", Some(2000000), Some(true));
+        let fixture = create_model_fixture("gpt-4", Some(2000000), Some(true));
         let formatted = format!("{}", CliModel(fixture));
         let actual = strip_ansi_codes(&formatted);
-        let expected = "claude-3 [ 2M 🛠️ ]";
+        let expected = "gpt-4 [ 2M 🛠️ ]";
         assert_eq!(actual, expected);
     }
 

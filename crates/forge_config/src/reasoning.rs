@@ -18,7 +18,7 @@ pub struct ReasoningConfig {
 
     /// Controls how many tokens the model can spend thinking.
     /// Should be greater than 1024 but less than the overall max_tokens.
-    /// Supported by openrouter, anthropic, and forge provider.
+    /// Supported by openrouter and forge provider.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_tokens: Option<usize>,
 
@@ -28,7 +28,7 @@ pub struct ReasoningConfig {
     pub exclude: Option<bool>,
 
     /// Enables reasoning at the "medium" effort level with no exclusions.
-    /// Supported by openrouter, anthropic, and forge provider.
+    /// Supported by openrouter and forge provider.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
 }
@@ -52,6 +52,6 @@ pub enum Effort {
     High,
     /// Extra-high reasoning effort (OpenAI / OpenRouter).
     XHigh,
-    /// Maximum reasoning effort; only available on select Anthropic models.
+    /// Maximum reasoning effort; only available on select models.
     Max,
 }

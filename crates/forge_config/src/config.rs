@@ -41,7 +41,6 @@ pub enum ProviderTypeEntry {
 #[serde(rename_all = "snake_case")]
 pub enum ProviderAuthMethod {
     ApiKey,
-    GoogleAdc,
 }
 
 /// A URL parameter variable for a provider, used to substitute template

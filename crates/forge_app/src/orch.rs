@@ -11,7 +11,6 @@ use tokio::sync::Notify;
 use tracing::warn;
 
 use crate::agent::AgentService;
-use crate::transformers::ModelSpecificReasoning;
 use crate::{EnvironmentInfra, TemplateEngine};
 
 #[derive(Clone, Setters)]
@@ -207,14 +206,9 @@ impl<S: AgentService + EnvironmentInfra<Config = forge_config::ForgeConfig>> Orc
             .pipe(ImageHandling::new())
             // Drop ALL reasoning (including config) when reasoning is not supported by the model
             .pipe(DropReasoningDetails.when(|_| !reasoning_supported))
-            // Strip all reasoning from messages when the model has changed (signatures are
-            // model-specific and invalid across models). No-op when model is unchanged.
-            .pipe(ReasoningNormalizer::new(model_id.clone()))
-            // Normalize Anthropic reasoning knobs per model family before provider conversion.
-            .pipe(
-                ModelSpecificReasoning::new(model_id.as_str())
-                    .when(|_| model_id.as_str().to_lowercase().contains("claude")),
-            );
+     // Strip all reasoning from messages when the model has changed (signatures are
+    // model-specific and invalid across models). No-op when model is unchanged.
+    .pipe(ReasoningNormalizer::new(model_id.clone()));
         let response = self
             .services
             .chat_agent(

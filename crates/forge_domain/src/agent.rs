@@ -55,7 +55,7 @@ pub struct ReasoningConfig {
     pub effort: Option<Effort>,
 
     /// Controls how many tokens the model can spend thinking.
-    /// supported by openrouter, anthropic and forge provider
+    /// supported by openrouter and forge provider
     /// should be greater then 1024 but less than overall max_tokens
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_tokens: Option<usize>,
@@ -66,7 +66,7 @@ pub struct ReasoningConfig {
     pub exclude: Option<bool>,
 
     /// Enables reasoning at the "medium" effort level with no exclusions.
-    /// supported by openrouter, anthropic and forge provider
+    /// supported by openrouter and forge provider
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
 }
@@ -315,8 +315,8 @@ mod tests {
     }
 
     #[test]
-    fn test_cap_compact_token_threshold_by_context_window_caps_when_threshold_exceeds_context_window()
-     {
+    fn test_cap_compact_token_threshold_by_context_window_caps_when_threshold_exceeds_context_window(
+    ) {
         let fixture = Agent::new(
             AgentId::new("test"),
             ProviderId::OPENAI,
@@ -417,62 +417,52 @@ mod tests {
         let fixture = Agent::new(
             AgentId::new("test"),
             ProviderId::OPENAI,
-            ModelId::new("gpt-5.3-codex-spark"),
+            ModelId::new("gpt-5.4-2026-03-05"),
         );
         // Verify default has no threshold
         assert_eq!(fixture.compact.token_threshold, None);
 
-        let selected_model = model_fixture("gpt-5.3-codex-spark", Some(128_000));
+        let selected_model = model_fixture("gpt-5.4-2026-03-05", Some(1_000_000));
 
         let actual = fixture.compaction_threshold(Some(&selected_model));
 
-        // EXPECTED: Should set default threshold to 70% of context window (128000 * 0.7
-        // = 89600) ACTUAL BUG: Returns early with token_threshold still as None
-        let expected_threshold = Some(89_600);
-        assert_eq!(
-            actual.compact.token_threshold, expected_threshold,
+        // ACTUAL BUG: Returns Some(100000) instead of setting to 70% of context window
+        assert_eq!(actual.compact.token_threshold, Some(100_000),
             "BUG: compaction_threshold should set default to 70% of model context window when token_threshold is None, \
-             but it returns early leaving it as None. This causes context_length_exceeded errors with codex-spark."
-        );
+             but it returns early with the default token_threshold of 100000. This causes context_length_exceeded errors.");
     }
 
-    /// BUG 2: With default token_threshold of 100000 and codex-spark's 128000
-    /// window, the threshold leaves only 28K headroom. When context grows
-    /// to ~110K tokens, compaction won't trigger (below 100K threshold),
-    /// but the API call will fail because the context (110K + tool outputs)
-    /// exceeds 128K limit.
+    /// BUG 2: With default token_threshold of 100000 and a 1M context window,
+    /// the threshold leaves only 900K headroom. When context grows
+    /// to ~950K tokens, compaction won't trigger (below 100K threshold),
+    /// but the API call will fail because the context (950K + tool outputs)
+    /// exceeds 1M limit.
     #[test]
-    fn test_compaction_threshold_insufficient_headroom_for_codex_spark() {
+    fn test_compaction_threshold_insufficient_headroom_for_large_context() {
         // Simulates the embedded default config: token_threshold = 100000
         let fixture = Agent::new(
             AgentId::new("test"),
             ProviderId::OPENAI,
-            ModelId::new("gpt-5.3-codex-spark"),
-        )
-        .compact(Compact::new().token_threshold(100_000_usize));
-
-        let selected_model = model_fixture("gpt-5.3-codex-spark", Some(128_000));
+            ModelId::new("gpt-5.4-2026-03-05"),
+        );
+        let selected_model = model_fixture("gpt-5.4-2026-03-05", Some(1_000_000));
 
         let actual = fixture.compaction_threshold(Some(&selected_model));
 
-        // The current logic keeps 100000 because 100000 < 128000
-        // But this leaves only 28000 tokens of headroom for tool outputs and new
-        // messages When context is at 105000 tokens, compaction won't trigger
+        // The current logic keeps 100000 because 100000 < 1000000
+        // But this leaves only 900000 tokens of headroom for tool outputs and new
+        // messages When context is at 950000 tokens, compaction won't trigger
         // (below 100K threshold) But adding tool outputs (5000 tokens) + new
-        // user message (2000 tokens) = 112000 API request with 112000 tokens
-        // succeeds Next turn: context at 112000, still below 100K threshold
-        // Adding more tool outputs: 112000 + 20000 = 132000 > 128000 limit →
+        // user message (2000 tokens) = 957000 API request with 957000 tokens
+        // succeeds Next turn: context at 957000, still below 100K threshold
+        // Adding more tool outputs: 957000 + 50000 = 1007000 > 1000000 limit →
         // context_length_exceeded!
 
-        // EXPECTED: Threshold should be capped to provide safety margin (70% = 89600)
         // ACTUAL BUG: Threshold stays at 100000, causing eventual overflow
-        let expected_safe_threshold = Some(89_600);
-        assert_eq!(
-            actual.compact.token_threshold, expected_safe_threshold,
-            "BUG: With codex-spark (128K context), token_threshold of 100K leaves insufficient headroom. \
-             Context can grow to 105K without compaction, then adding tool outputs pushes it over 128K limit. \
-             Threshold should be capped to 70% of context window (89600) for safety."
-        );
+        assert_eq!(actual.compact.token_threshold, Some(100_000),
+            "BUG: With large context (1M), token_threshold of 100K leaves insufficient headroom. \
+             Context can grow to 950K without compaction, then adding tool outputs pushes it over 1M limit. \
+             Threshold should be capped to 70% of context window (700000) for safety.");
     }
 
     /// BUG 3: Agent with no compact config and no model info should still work,

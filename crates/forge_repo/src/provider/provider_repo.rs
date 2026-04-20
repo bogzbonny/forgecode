@@ -130,9 +130,6 @@ impl From<forge_config::ProviderEntry> for ProviderConfig {
                 .into_iter()
                 .map(|m| match m {
                     forge_config::ProviderAuthMethod::ApiKey => forge_domain::AuthMethod::ApiKey,
-                    forge_config::ProviderAuthMethod::GoogleAdc => {
-                        forge_domain::AuthMethod::GoogleAdc
-                    }
                 })
                 .collect()
         };

@@ -196,7 +196,7 @@ mod tests {
         Agent::new(
             AgentId::new("test"),
             ProviderId::OPENAI,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ModelId::new("gpt-4"),
         )
     }
 
@@ -249,7 +249,7 @@ mod tests {
 
     /// When config sets `enabled = false`, it must override the agent's
     /// `enabled = true`. This prevents reasoning parameters from being sent to
-    /// models that don't support them (e.g. claude-haiku with effort set).
+    /// models that don't support them (e.g. small models with effort set).
     #[test]
     fn test_config_disabled_overrides_agent_enabled() {
         let config = ForgeConfig::default().reasoning(

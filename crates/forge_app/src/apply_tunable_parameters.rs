@@ -55,7 +55,7 @@ mod tests {
         let agent = Agent::new(
             AgentId::new("test"),
             ProviderId::OPENAI,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ModelId::new("gpt-4"),
         )
         .temperature(Temperature::new(0.7).unwrap())
         .max_tokens(MaxTokens::new(1000).unwrap())

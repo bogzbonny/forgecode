@@ -490,7 +490,7 @@
           "const": "xhigh"
         },
         {
-          "description": "Maximum reasoning effort; only available on select Anthropic models.",
+          "description": "Maximum reasoning effort; only available on select models.",
           "type": "string",
           "const": "max"
         }
@@ -627,8 +627,7 @@
       "description": "Authentication method supported by a provider.\n\nOnly the simple (non-OAuth) methods are available here; providers that\nrequire OAuth device or authorization-code flows must be configured via the\nfile-based `provider.json` override instead.",
       "type": "string",
       "enum": [
-        "api_key",
-        "google_adc"
+        "api_key"
       ]
     },
     "ProviderEntry": {
@@ -775,7 +774,7 @@
           ]
         },
         "enabled": {
-          "description": "Enables reasoning at the \"medium\" effort level with no exclusions.\nSupported by openrouter, anthropic, and forge provider.",
+          "description": "Enables reasoning at the \"medium\" effort level with no exclusions.\nSupported by openrouter and forge provider.",
           "type": [
             "boolean",
             "null"
@@ -789,7 +788,7 @@
           ]
         },
         "max_tokens": {
-          "description": "Controls how many tokens the model can spend thinking.\nShould be greater than 1024 but less than the overall max_tokens.\nSupported by openrouter, anthropic, and forge provider.",
+          "description": "Controls how many tokens the model can spend thinking.\nShould be greater than 1024 but less than the overall max_tokens.\nSupported by openrouter and forge provider.",
           "type": [
             "integer",
             "null"

@@ -46,7 +46,6 @@ base64.workspace = true
 http.workspace = true
 url.workspace = true
 tonic.workspace = true
-google-cloud-auth.workspace = true
 open.workspace = true
 
 [dev-dependencies]

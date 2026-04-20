@@ -2749,23 +2749,16 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
             .collect::<anyhow::Result<HashMap<_, _>>>()?;
 
         // Check if API key is already provided
-        // For Google ADC, we use a marker to skip prompting
-        // For other providers, we use the existing key as a default value (autofill)
+        // Use the existing key as a default value (autofill)
         let api_key_str = if let Some(default_key) = &request.api_key {
             let key_str = default_key.as_ref();
-
-            // Skip prompting only for Google ADC marker
-            if key_str == "google_adc_marker" {
-                key_str.to_string()
-            } else {
-                // For other providers, show the existing key as default (autofill)
-                let input = ForgeWidget::input(format!("Enter your {provider_id} API key"))
-                    .with_default(key_str);
-                let api_key = input.prompt()?.context("API key input cancelled")?;
-                let api_key_str = api_key.trim();
-                anyhow::ensure!(!api_key_str.is_empty(), "API key cannot be empty");
-                api_key_str.to_string()
-            }
+            // Show the existing key as default (autofill)
+            let input = ForgeWidget::input(format!("Enter your {provider_id} API key"))
+                .with_default(key_str);
+            let api_key = input.prompt()?.context("API key input cancelled")?;
+            let api_key_str = api_key.trim();
+            anyhow::ensure!(!api_key_str.is_empty(), "API key cannot be empty");
+            api_key_str.to_string()
         } else {
             // Prompt for API key input (no existing key)
             let input = ForgeWidget::input(format!("Enter your {provider_id} API key"));
@@ -2993,8 +2986,6 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                 AuthMethod::ApiKey => "API Key".to_string(),
                 AuthMethod::OAuthDevice(_) => "OAuth Device Flow".to_string(),
                 AuthMethod::OAuthCode(_) => "OAuth Authorization Code".to_string(),
-                AuthMethod::GoogleAdc => "Google Application Default Credentials (ADC)".to_string(),
-                AuthMethod::CodexDevice(_) => "OpenAI Codex Device Flow".to_string(),
             })
             .collect();
 

@@ -47,7 +47,6 @@ impl<H: HttpInfra> OpenAIProvider<H> {
                 forge_domain::AuthDetails::ApiKey(key) => key.as_str(),
                 forge_domain::AuthDetails::OAuthWithApiKey { api_key, .. } => api_key.as_str(),
                 forge_domain::AuthDetails::OAuth { tokens, .. } => tokens.access_token.as_str(),
-                forge_domain::AuthDetails::GoogleAdc(token) => token.as_str(),
             })
         {
             headers.push((AUTHORIZATION.to_string(), format!("Bearer {api_key}")));
@@ -71,14 +70,6 @@ impl<H: HttpInfra> OpenAIProvider<H> {
                         });
                     }
                 }
-                forge_domain::AuthMethod::CodexDevice(oauth_config) => {
-                    if let Some(custom_headers) = &oauth_config.custom_headers {
-                        custom_headers.iter().for_each(|(k, v)| {
-                            headers.push((k.clone(), v.clone()));
-                        });
-                    }
-                }
-                forge_domain::AuthMethod::GoogleAdc => {}
             });
         // Append provider-level custom headers (from provider.json config)
         if let Some(custom_headers) = &self.provider.custom_headers {
@@ -210,7 +201,6 @@ impl<T: HttpInfra> OpenAIProvider<T> {
 /// Handles providers that use OpenAI's API format including:
 /// - OpenAI
 /// - Azure OpenAI
-/// - Vertex AI
 /// - OpenRouter
 /// - DeepSeek
 /// - Groq

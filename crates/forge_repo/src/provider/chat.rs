@@ -32,7 +32,7 @@ impl<F: EnvironmentInfra<Config = forge_config::ForgeConfig> + HttpInfra> ForgeC
         let model_cache_ttl_secs = config.model_cache_ttl_secs;
 
         let openai_repo = OpenAIResponseRepository::new(infra.clone());
-        let codex_repo = OpenAIResponsesResponseRepository::new(infra.clone());
+        let openai_responses_repo = OpenAIResponsesResponseRepository::new(infra.clone());
 
         let model_cache = Arc::new(CacacheStorage::new(
             env.cache_dir().join("model_cache"),
@@ -42,7 +42,7 @@ impl<F: EnvironmentInfra<Config = forge_config::ForgeConfig> + HttpInfra> ForgeC
         Self {
             router: Arc::new(ProviderRouter {
                 openai_repo,
-                codex_repo,
+                openai_responses_repo,
             }),
             model_cache,
             bg_refresh: BgRefresh::default(),
@@ -110,7 +110,7 @@ impl<F: EnvironmentInfra<Config = forge_config::ForgeConfig> + HttpInfra + Sync>
 /// Routes chat and model requests to the correct provider backend.
 struct ProviderRouter<F> {
     openai_repo: OpenAIResponseRepository<F>,
-    codex_repo: OpenAIResponsesResponseRepository<F>,
+    openai_responses_repo: OpenAIResponsesResponseRepository<F>,
 }
 
 impl<F: HttpInfra + EnvironmentInfra<Config = forge_config::ForgeConfig> + Sync> ProviderRouter<F> {
@@ -123,7 +123,7 @@ impl<F: HttpInfra + EnvironmentInfra<Config = forge_config::ForgeConfig> + Sync>
         match provider.response {
             Some(ProviderResponse::OpenAI) => self.openai_repo.chat(model_id, context, provider).await,
             Some(ProviderResponse::OpenAIResponses) => {
-                self.codex_repo.chat(model_id, context, provider).await
+                self.openai_responses_repo.chat(model_id, context, provider).await
             }
             None => Err(anyhow::anyhow!(
                 "Provider response type not configured for provider: {}",
@@ -135,7 +135,7 @@ impl<F: HttpInfra + EnvironmentInfra<Config = forge_config::ForgeConfig> + Sync>
     async fn models(&self, provider: Provider<Url>) -> anyhow::Result<Vec<Model>> {
         match provider.response {
             Some(ProviderResponse::OpenAI) => self.openai_repo.models(provider).await,
-            Some(ProviderResponse::OpenAIResponses) => self.codex_repo.models(provider).await,
+            Some(ProviderResponse::OpenAIResponses) => self.openai_responses_repo.models(provider).await,
             None => Err(anyhow::anyhow!(
                 "Provider response type not configured for provider: {}",
                 provider.id

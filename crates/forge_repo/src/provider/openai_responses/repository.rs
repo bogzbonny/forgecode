@@ -77,7 +77,6 @@ impl<H: HttpInfra> OpenAIResponsesProvider<H> {
                 forge_domain::AuthDetails::ApiKey(key) => key.as_str(),
                 forge_domain::AuthDetails::OAuthWithApiKey { api_key, .. } => api_key.as_str(),
                 forge_domain::AuthDetails::OAuth { tokens, .. } => tokens.access_token.as_str(),
-                forge_domain::AuthDetails::GoogleAdc(token) => token.as_str(),
             })
         {
             headers.push((AUTHORIZATION.to_string(), format!("Bearer {api_key}")));
@@ -95,14 +94,6 @@ impl<H: HttpInfra> OpenAIResponsesProvider<H> {
                     }
                 }
                 forge_domain::AuthMethod::OAuthCode(oauth_config) => {
-                    if let Some(custom_headers) = &oauth_config.custom_headers {
-                        custom_headers.iter().for_each(|(k, v)| {
-                            headers.push((k.clone(), v.clone()));
-                        });
-                    }
-                }
-                forge_domain::AuthMethod::GoogleAdc => {}
-                forge_domain::AuthMethod::CodexDevice(oauth_config) => {
                     if let Some(custom_headers) = &oauth_config.custom_headers {
                         custom_headers.iter().for_each(|(k, v)| {
                             headers.push((k.clone(), v.clone()));
@@ -918,19 +909,14 @@ mod tests {
             id: ProviderId::OPENAI,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://chatgpt.com/backend-api/codex/responses").unwrap(),
+            url: Url::parse("https://api.openai.com/v1/chat/completions").unwrap(),
             credential: make_credential(ProviderId::OPENAI, "test-token"),
             custom_headers: None,
-            auth_methods: vec![forge_domain::AuthMethod::CodexDevice(
+            auth_methods: vec![forge_domain::AuthMethod::OAuthDevice(
                 forge_domain::OAuthConfig {
-                    auth_url: Url::parse(
-                        "https://auth.openai.com/api/accounts/deviceauth/usercode",
-                    )
-                    .unwrap(),
-                    token_url: Url::parse("https://auth.openai.com/oauth/token").unwrap(),
-                    client_id: forge_domain::ClientId::from(
-                        "app_EMoamEEZ73f0CkXaXp7hrann".to_string(),
-                    ),
+                    auth_url: Url::parse("https://auth.example.com/device").unwrap(),
+                    token_url: Url::parse("https://auth.example.com/token").unwrap(),
+                    client_id: forge_domain::ClientId::from("test_client".to_string()),
                     scopes: vec![],
                     redirect_uri: None,
                     use_pkce: false,
