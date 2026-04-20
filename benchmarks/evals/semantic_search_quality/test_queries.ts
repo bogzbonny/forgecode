@@ -4,10 +4,10 @@
  * Manual Query Tester for Semantic Search
  * 
  * This script helps developers test and improve their semantic search queries
- * before committing them to the codebase using Gemini 3 Pro via Vertex AI.
+ * before committing them to the codebase using an OpenAI-compatible LLM.
  */
 
-import { vertex } from "@ai-sdk/google-vertex";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import * as readline from "readline";
@@ -61,7 +61,7 @@ Focus on practical, actionable suggestions.`;
 
   // @ts-ignore - Type instantiation depth issue with complex Zod schemas
   const result = await generateObject({
-    model: vertex("gemini-3-pro-preview"),
+    model: createOpenAI({ apiKey: process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY })("anthropic/claude-sonnet-4-20250514"),
     schema: QueryEvaluationSchema,
     prompt,
     temperature: 0.3,

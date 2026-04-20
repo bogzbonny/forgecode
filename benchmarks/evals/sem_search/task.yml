@@ -3,7 +3,7 @@ run:
   - git clone --depth=1 --branch main https://github.com/tailcallhq/forgecode .
   - forge workspace init --yes
   - forge workspace sync
-  - FORGE_DEBUG_REQUESTS='{{dir}}/context.jsonl' FORGE_SESSION__PROVIDER_ID=open_router FORGE_SESSION__MODEL_ID={{model}} forge -p '{{task}}'
+  - FORGE_DEBUG_REQUESTS='{{dir}}/context.jsonl' FORGE_SESSION__PROVIDER_ID=forge FORGE_SESSION__MODEL_ID={{model}} forge -p '{{task}}'
 parallelism: 8
 timeout: 60
 early_exit: true
@@ -16,7 +16,6 @@ validations:
     command: "python3 -c \"\nimport sys\nlog = open('{{dir}}/task.log').read().splitlines()\ntask_line = next((i for i, l in enumerate(log) if '[Agent]' in l), None)\nsearch_line = next((i for i, l in enumerate(log) if 'Codebase Search' in l), None)\nif task_line is None: sys.exit(0)\nif search_line is None: sys.exit(1)\nsys.exit(0 if search_line < task_line else 1)\n\""
 sources:
   - value:
-      # - model: "x-ai/grok-code-fast-1"
       - model: "openai/gpt-4o"
   - value:
       # # Location questions - "where is"
@@ -76,7 +75,7 @@ sources:
       - task: "Starting a new session always loads the older node version"
       - task: "Examine any existing curl examples or HTTP client implementations"
       - task: "Before  sorting the tools we will dedupe all the tools"
-      - task: "Identify the current embedding implementation and how it interfaces with OpenRouter"
+      - task: "Identify the current embedding implementation and how it interfaces with the upstream provider"
       - task: "Is there a place in the code base where we are subscribing to events?"
       - task: "There is a bug, where when I paste text the syntax highlighting is lost for a moment until some key is pressed again."
       - task: "Search for any existing validation patterns in the forge_domain crate, particularly looking for validation methods, validate functions, or error types used for domain validation"

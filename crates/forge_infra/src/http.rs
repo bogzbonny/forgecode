@@ -180,8 +180,8 @@ impl<F: forge_app::FileWriterInfra + 'static> ForgeHttpInfra<F> {
         Ok(response)
     }
 
-    // OpenRouter optional headers ref: https://openrouter.ai/docs/api-reference/overview#headers
-    // - `HTTP-Referer`: Identifies your app on openrouter.ai
+       // Optional headers for certain provider integrations:
+    // - `HTTP-Referer`: Identifies your app on the provider's platform
     // - `X-Title`: Sets/modifies your app's title
     fn headers(&self, headers: Option<HeaderMap>) -> HeaderMap {
         let mut headers = headers.unwrap_or_default();

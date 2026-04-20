@@ -68,13 +68,11 @@ impl ResultStreamExt<anyhow::Error> for crate::BoxStream<ChatCompletionMessage, 
             let message =
                 anyhow::Ok(message?).with_context(|| "Failed to process message stream")?;
             // Process usage information
-            // - For Anthropic-style streaming: input tokens in MessageStart, output tokens
-            //   in MessageDelta (values are CUMULATIVE, not incremental)
-            //   ref: https://docs.anthropic.com/en/docs/build-with-claude/streaming#event-types
-            // - For OpenAI-style streaming: all tokens in the final chunk
-            // - For GLM-style: may send complete usage in every chunk (need to replace, not
+            // - For cumulative-style streaming: input tokens in initial chunks, output tokens
+            //   in final chunks (values are CUMULATIVE, not incremental)
+            // - For standard OpenAI-style streaming: all tokens in the final chunk
+            // - For some providers: may send complete usage in every chunk (need to replace, not
             //   accumulate)
-            // - For Google-style: cumulative usage in every chunk
             // - Cost-only events: have 0 tokens but a cost value
             if let Some(current_usage) = message.usage.as_ref() {
                 // If current usage has both prompt and completion tokens, it's a "complete"

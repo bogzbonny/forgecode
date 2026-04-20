@@ -307,7 +307,7 @@ impl Request {
     }
 }
 
-/// ref: https://openrouter.ai/docs/transforms
+/// Provider-specific request transforms (e.g., middle-out compression).
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Transform {
     #[default]

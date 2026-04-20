@@ -99,7 +99,7 @@ impl From<Model> for forge_domain::Model {
                 .map(|params| params.iter().any(|p| p == name))
         };
 
-        // Parse input modalities from OpenRouter's input_modalities field
+        // Parse input modalities from the architecture field
         let input_modalities = value
             .architecture
             .as_ref()

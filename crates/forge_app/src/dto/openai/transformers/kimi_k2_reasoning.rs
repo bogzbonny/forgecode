@@ -6,7 +6,7 @@ use crate::dto::openai::Request;
 /// flat format.
 ///
 /// kimi_k2 models expect reasoning to be sent as a flat `reasoning_content`
-/// string field instead of the OpenRouter-style `reasoning_details` array.
+/// string field instead of the structured `reasoning_details` array.
 ///
 /// This transformer:
 /// 1. Extracts `reasoning.text` type entries → `reasoning_content`

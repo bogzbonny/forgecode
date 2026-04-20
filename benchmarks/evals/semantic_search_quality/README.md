@@ -90,11 +90,9 @@ The judge uses structured output (Zod schema) to provide:
 ## Environment Variables
 
 Required:
-- `GOOGLE_APPLICATION_CREDENTIALS`: Path to Google Cloud service account JSON credentials file
+- `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`: API key for the LLM judge provider
 
-Or authenticate using `gcloud auth application-default login`.
-
-The LLM judge uses Google Cloud Vertex AI. It supports Google's Application Default Credentials through the `google-auth-library`. The most common authentication method is to set the path to a JSON credentials file in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
+The LLM judge uses an OpenAI-compatible API to evaluate query quality. Configure the provider and model in the `llm_judge.ts` file.
 
 ## Test Cases
 

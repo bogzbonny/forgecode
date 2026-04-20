@@ -4,7 +4,7 @@
  * LLM-as-Judge for Semantic Search Quality Evaluation
  *
  * This script evaluates the quality of semantic search queries and results
- * using Google's Gemini 3 Pro via Vertex AI as a judge. It verifies:
+ * using an OpenAI-compatible API as a judge. It verifies:
  * 1. Query quality - Are the embedding and reranking queries well-formed?
  * 2. Result relevance - Do the results match the stated intent?
  * 3. File type accuracy - Are the correct file types returned?
@@ -12,7 +12,7 @@
  */
 
 import { readFileSync } from "fs";
-import { vertex } from "@ai-sdk/google-vertex";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
@@ -289,7 +289,7 @@ Please evaluate these queries and provide detailed, constructive feedback.`;
   try {
     // @ts-ignore - Type instantiation depth issue with complex Zod schemas
     const result = await generateObject({
-      model: vertex("gemini-3-pro-preview"),
+      model: createOpenAI({ apiKey: process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY })("anthropic/claude-sonnet-4-20250514"),
       schema: EvaluationSchema,
       prompt,
       temperature: 0.3, // Lower temperature for more consistent evaluations
@@ -297,7 +297,7 @@ Please evaluate these queries and provide detailed, constructive feedback.`;
 
     return result.object as Evaluation;
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
+    console.error("Error calling LLM API:", error);
     throw error;
   }
 }

@@ -139,125 +139,124 @@ if ! cargo build 2>&1 | grep -E "^error|Finished|^   Compiling forge_main"; then
     exit 1
 fi
 
-# ─── OpenRouter · openai/o4-mini — effort levels ─────────────────────────────
-# OpenRouter passes reasoning.effort straight through.
+# ─── Forge · openai/o4-mini — effort levels ──────────────────────────────────
+# Forge passes reasoning.effort straight through to the underlying provider.
 # Valid effort values: none · minimal · low · medium · high · xhigh
 # Note: the default forge config sets reasoning.enabled=true; it always appears
 # alongside any explicit effort. max_tokens and exclude remain absent.
-# Ref: https://openrouter.ai/docs/guides/best-practices/reasoning-tokens
 
 for effort in none minimal low medium high xhigh; do
     next_result_file
     (
-        log_header "OpenRouter · openai/o4-mini · effort: $effort"
-        OUT="$WORK_DIR/openrouter-openai-effort-$effort.json"
-        if run_test "$OUT" open_router "openai/o4-mini" "FORGE_REASONING__EFFORT=$effort"; then
-            assert_field "$OUT" "reasoning.effort"     "\"$effort\"" "openrouter/openai"
-            assert_field "$OUT" "reasoning.max_tokens" "null"        "openrouter/openai"
-            assert_field "$OUT" "reasoning.exclude"    "null"        "openrouter/openai"
+        log_header "Forge · openai/o4-mini · effort: $effort"
+        OUT="$WORK_DIR/forge-openai-effort-$effort.json"
+        if run_test "$OUT" forge "openai/o4-mini" "FORGE_REASONING__EFFORT=$effort"; then
+            assert_field "$OUT" "reasoning.effort"     "\"$effort\"" "forge/openai"
+            assert_field "$OUT" "reasoning.max_tokens" "null"        "forge/openai"
+            assert_field "$OUT" "reasoning.exclude"    "null"        "forge/openai"
         else
-            log_skip "open_router not configured — skipping"
+            log_skip "forge not configured — skipping"
         fi
     ) > "$CURRENT_RF" &
 done
 
-# ─── OpenRouter · openai/o4-mini — max_tokens ────────────────────────────────
+# ─── Forge · openai/o4-mini — max_tokens ─────────────────────────────────────
 # When max_tokens is set, reasoning.max_tokens should appear.
 # Note: the default forge config also injects effort="medium" and enabled=true;
 # only max_tokens itself is verified here.
 
 next_result_file
 (
-    log_header "OpenRouter · openai/o4-mini · max_tokens: 4000"
-    OUT="$WORK_DIR/openrouter-openai-max-tokens.json"
-    if run_test "$OUT" open_router "openai/o4-mini" FORGE_REASONING__MAX_TOKENS=4000; then
-        assert_field "$OUT" "reasoning.max_tokens" "4000" "openrouter/openai"
+    log_header "Forge · openai/o4-mini · max_tokens: 4000"
+    OUT="$WORK_DIR/forge-openai-max-tokens.json"
+    if run_test "$OUT" forge "openai/o4-mini" FORGE_REASONING__MAX_TOKENS=4000; then
+        assert_field "$OUT" "reasoning.max_tokens" "4000" "forge/openai"
     else
-        log_skip "open_router not configured — skipping"
+        log_skip "forge not configured — skipping"
     fi
 ) > "$CURRENT_RF" &
 
-# ─── OpenRouter · openai/o4-mini — exclude ───────────────────────────────────
+# ─── Forge · openai/o4-mini — exclude ────────────────────────────────────────
 # When exclude=true, reasoning runs internally but is omitted from the response.
 
 next_result_file
 (
-    log_header "OpenRouter · openai/o4-mini · effort: high + exclude: true"
-    OUT="$WORK_DIR/openrouter-openai-exclude.json"
-    if run_test "$OUT" open_router "openai/o4-mini" \
+    log_header "Forge · openai/o4-mini · effort: high + exclude: true"
+    OUT="$WORK_DIR/forge-openai-exclude.json"
+    if run_test "$OUT" forge "openai/o4-mini" \
             FORGE_REASONING__EFFORT=high FORGE_REASONING__EXCLUDE=true; then
-        assert_field "$OUT" "reasoning.effort"  '"high"' "openrouter/openai"
-        assert_field "$OUT" "reasoning.exclude" "true"   "openrouter/openai"
+        assert_field "$OUT" "reasoning.effort"  '"high"' "forge/openai"
+        assert_field "$OUT" "reasoning.exclude" "true"   "forge/openai"
     else
-        log_skip "open_router not configured — skipping"
+        log_skip "forge not configured — skipping"
     fi
 ) > "$CURRENT_RF" &
 
-# ─── OpenRouter · openai/o4-mini — enabled ───────────────────────────────────
+# ─── Forge · openai/o4-mini — enabled ────────────────────────────────────────
 # enabled=true activates reasoning. The default config already sets enabled=true
 # and effort="medium"; this test confirms enabled is explicitly passed through.
 
 next_result_file
 (
-    log_header "OpenRouter · openai/o4-mini · enabled: true"
-    OUT="$WORK_DIR/openrouter-openai-enabled.json"
-    if run_test "$OUT" open_router "openai/o4-mini" FORGE_REASONING__ENABLED=true; then
-        assert_field "$OUT" "reasoning.enabled" "true" "openrouter/openai"
-        assert_field "$OUT" "reasoning.exclude" "null" "openrouter/openai"
+    log_header "Forge · openai/o4-mini · enabled: true"
+    OUT="$WORK_DIR/forge-openai-enabled.json"
+    if run_test "$OUT" forge "openai/o4-mini" FORGE_REASONING__ENABLED=true; then
+        assert_field "$OUT" "reasoning.enabled" "true" "forge/openai"
+        assert_field "$OUT" "reasoning.exclude" "null" "forge/openai"
     else
-        log_skip "open_router not configured — skipping"
+        log_skip "forge not configured — skipping"
     fi
 ) > "$CURRENT_RF" &
 
-# ─── OpenRouter · moonshotai/kimi-k2 — max_tokens ────────────────────────────
-# Kimi K2 uses token-budget reasoning via OpenRouter (reasoning.max_tokens).
+# ─── Forge · moonshotai/kimi-k2 — max_tokens ─────────────────────────────────
+# Kimi K2 uses token-budget reasoning (reasoning.max_tokens).
 # Valid range: integer >= 1024
 
 next_result_file
 (
-    log_header "OpenRouter · moonshotai/kimi-k2 · max_tokens: 4000"
-    OUT="$WORK_DIR/openrouter-kimi-max-tokens.json"
-    if run_test "$OUT" open_router "moonshotai/kimi-k2" FORGE_REASONING__MAX_TOKENS=4000; then
-        assert_field "$OUT" "reasoning.max_tokens" "4000" "openrouter/kimi-k2"
+    log_header "Forge · moonshotai/kimi-k2 · max_tokens: 4000"
+    OUT="$WORK_DIR/forge-kimi-max-tokens.json"
+    if run_test "$OUT" forge "moonshotai/kimi-k2" FORGE_REASONING__MAX_TOKENS=4000; then
+        assert_field "$OUT" "reasoning.max_tokens" "4000" "forge/kimi-k2"
     else
-        log_skip "open_router not configured — skipping"
+        log_skip "forge not configured — skipping"
     fi
 ) > "$CURRENT_RF" &
 
 next_result_file
 (
-    log_header "OpenRouter · moonshotai/kimi-k2 · effort: high"
-    OUT="$WORK_DIR/openrouter-kimi-effort-high.json"
-    if run_test "$OUT" open_router "moonshotai/kimi-k2" FORGE_REASONING__EFFORT=high; then
-        assert_field "$OUT" "reasoning.effort" '"high"' "openrouter/kimi-k2"
+    log_header "Forge · moonshotai/kimi-k2 · effort: high"
+    OUT="$WORK_DIR/forge-kimi-effort-high.json"
+    if run_test "$OUT" forge "moonshotai/kimi-k2" FORGE_REASONING__EFFORT=high; then
+        assert_field "$OUT" "reasoning.effort" '"high"' "forge/kimi-k2"
     else
-        log_skip "open_router not configured — skipping"
+        log_skip "forge not configured — skipping"
     fi
 ) > "$CURRENT_RF" &
 
-# ─── OpenRouter · minimax/minimax-m2 — max_tokens ────────────────────────────
-# MiniMax M2 uses token-budget reasoning via OpenRouter; maps to thinking_budget.
+# ─── Forge · minimax/minimax-m2 — max_tokens ─────────────────────────────────
+# MiniMax M2 uses token-budget reasoning; maps to thinking_budget.
 # Valid range: integer >= 1024
 
 next_result_file
 (
-    log_header "OpenRouter · minimax/minimax-m2 · max_tokens: 4000"
-    OUT="$WORK_DIR/openrouter-minimax-max-tokens.json"
-    if run_test "$OUT" open_router "minimax/minimax-m2" FORGE_REASONING__MAX_TOKENS=4000; then
-        assert_field "$OUT" "reasoning.max_tokens" "4000" "openrouter/minimax-m2"
+    log_header "Forge · minimax/minimax-m2 · max_tokens: 4000"
+    OUT="$WORK_DIR/forge-minimax-max-tokens.json"
+    if run_test "$OUT" forge "minimax/minimax-m2" FORGE_REASONING__MAX_TOKENS=4000; then
+        assert_field "$OUT" "reasoning.max_tokens" "4000" "forge/minimax-m2"
     else
-        log_skip "open_router not configured — skipping"
+        log_skip "forge not configured — skipping"
     fi
 ) > "$CURRENT_RF" &
 
 next_result_file
 (
-    log_header "OpenRouter · minimax/minimax-m2 · effort: high"
-    OUT="$WORK_DIR/openrouter-minimax-effort-high.json"
-    if run_test "$OUT" open_router "minimax/minimax-m2" FORGE_REASONING__EFFORT=high; then
-        assert_field "$OUT" "reasoning.effort" '"high"' "openrouter/minimax-m2"
+    log_header "Forge · minimax/minimax-m2 · effort: high"
+    OUT="$WORK_DIR/forge-minimax-effort-high.json"
+    if run_test "$OUT" forge "minimax/minimax-m2" FORGE_REASONING__EFFORT=high; then
+        assert_field "$OUT" "reasoning.effort" '"high"' "forge/minimax-m2"
     else
-        log_skip "open_router not configured — skipping"
+        log_skip "forge not configured — skipping"
     fi
 ) > "$CURRENT_RF" &
 
@@ -325,7 +324,7 @@ next_result_file
 (
     log_header "Invalid effort · config parse error"
     for entry in \
-        "open_router:openai/o4-mini" \
+        "forge:openai/o4-mini" \
         "github_copilot:o4-mini" \
         "codex:gpt-5.1-codex"
     do

@@ -1,12 +1,12 @@
 before_run:
   # Install AI SDK for LLM verification
-  - npm install --no-save ai @ai-sdk/google-vertex zod
+  - npm install --no-save ai zod
 
 run:
   # Clone into `tmp/task` dir
   - git clone --depth=1 --branch main https://github.com/tailcallhq/forgecode .
   - forgee workspace sync
-  - FORGE_DEBUG_REQUESTS='{{dir}}/context.json' forgee --provider open_router --model {{model}} -p '{{task}}'
+  - FORGE_DEBUG_REQUESTS='{{dir}}/context.json' forgee --provider forge --model {{model}} -p '{{task}}'
 
 parallelism: 30
 timeout: 120

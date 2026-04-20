@@ -97,7 +97,7 @@ fn test_stringified_tool_call_arguments_roundtrip() {
     let args = &tool_calls_json[0]["arguments"];
 
     // THE KEY TEST: arguments should be a JSON object, not a string
-    // This is what Fireworks API expects - if it's a string, we get 400 error
+    // This is what OpenAI-compatible APIs expect - if it's a string, we get 400 error
     assert!(
         args.is_object(),
         "CRITICAL: arguments must be a JSON object for API, not a string. Got: {}",

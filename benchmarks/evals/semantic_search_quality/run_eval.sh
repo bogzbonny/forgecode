@@ -36,19 +36,16 @@ SHOULD_AVOID=$(cat "$CONTEXT_FILE" | jq -r '.task.should_avoid // [] | join(",")
 QUERIES=$(cat "$CONTEXT_FILE" | jq -r '[.messages[]?.tool_calls[]? | select(.function.name == "sem_search") | .function.arguments] | .[0]' 2>/dev/null || echo '{}')
 echo "  Queries extracted: $(echo "$QUERIES" | jq -r '.queries | length // 0') query pairs"
 
-# Step 3: Check authentication
+# Step 3: Check API key availability
 echo ""
-echo "Step 3: Checking Google Cloud authentication..."
-if gcloud auth application-default print-access-token > /dev/null 2>&1; then
-  echo "✓ Google Cloud authentication available"
-  RUN_LLM_JUDGE=true
-elif [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ] && [ -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
-  echo "✓ Service account credentials found"
+echo "Step 3: Checking LLM API key..."
+if [ -n "$ANTHROPIC_API_KEY" ] || [ -n "$OPENAI_API_KEY" ]; then
+  echo "✓ LLM API key available"
   RUN_LLM_JUDGE=true
 else
-  echo "⚠ Google Cloud authentication not configured"
+  echo "⚠ LLM API key not configured"
   echo "  Skipping LLM judge evaluation"
-  echo "  To enable: run 'gcloud auth application-default login'"
+  echo "  To enable: set ANTHROPIC_API_KEY or OPENAI_API_KEY"
   RUN_LLM_JUDGE=false
 fi
 
@@ -84,12 +81,12 @@ if [ "$RUN_LLM_JUDGE" = true ]; then
     exit 1
   fi
 else
-  echo "Step 4: Skipped (authentication required)"
+  echo "Step 4: Skipped (API key required)"
   echo ""
   echo "=========================================="
   echo "✓ VALIDATION PASSED (LLM judge skipped)"
   echo "=========================================="
   echo ""
-  echo "Note: Full evaluation requires Google Cloud auth"
+  echo "Note: Full evaluation requires an LLM API key"
   exit 0
 fi

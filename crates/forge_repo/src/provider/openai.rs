@@ -34,8 +34,8 @@ impl<H: HttpInfra> OpenAIProvider<H> {
         Self { provider, http }
     }
 
-    // OpenRouter optional headers ref: https://openrouter.ai/docs/api-reference/overview#headers
-    // - `HTTP-Referer`: Identifies your app on openrouter.ai
+    // Optional headers for certain provider integrations:
+    // - `HTTP-Referer`: Identifies your app on the provider's platform
     // - `X-Title`: Sets/modifies your app's title
     fn get_headers(&self) -> Vec<(String, String)> {
         let mut headers = Vec::new();
