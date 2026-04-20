@@ -224,7 +224,7 @@ mod tests {
 
         async fn get_provider(&self, _id: ProviderId) -> Result<Provider<Url>> {
             Ok(Provider {
-                id: ProviderId::OPENAI,
+                id: ProviderId::OPENAI_COMPATIBLE,
                 provider_type: Default::default(),
                 response: Some(ProviderResponse::OpenAI),
                 url: Url::parse("https://api.test.com").unwrap(),
@@ -234,7 +234,7 @@ mod tests {
                 auth_methods: vec![AuthMethod::ApiKey],
                 url_params: vec![],
                 credential: Some(AuthCredential {
-                    id: ProviderId::OPENAI,
+                    id: ProviderId::OPENAI_COMPATIBLE,
                     auth_details: AuthDetails::ApiKey("test-key".to_string().into()),
                     url_params: Default::default(),
                 }),
@@ -263,7 +263,7 @@ mod tests {
     impl AppConfigService for MockServices {
         async fn get_session_config(&self) -> Option<forge_domain::ModelConfig> {
             Some(forge_domain::ModelConfig::new(
-                ProviderId::OPENAI,
+                ProviderId::OPENAI_COMPATIBLE,
                 ModelId::new("test-model"),
             ))
         }

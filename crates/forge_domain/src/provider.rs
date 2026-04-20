@@ -46,7 +46,6 @@ pub struct ProviderId(Cow<'static, str>);
 impl ProviderId {
     // Built-in provider constants
     pub const FORGE: ProviderId = ProviderId(Cow::Borrowed("forge"));
-    pub const OPENAI: ProviderId = ProviderId(Cow::Borrowed("openai"));
     pub const OPENAI_COMPATIBLE: ProviderId = ProviderId(Cow::Borrowed("openai_compatible"));
     pub const OPENAI_RESPONSES_COMPATIBLE: ProviderId =
         ProviderId(Cow::Borrowed("openai_responses_compatible"));
@@ -61,7 +60,6 @@ impl ProviderId {
     pub fn built_in_providers() -> &'static [ProviderId] {
         &[
             ProviderId::FORGE,
-            ProviderId::OPENAI,
             ProviderId::OPENAI_COMPATIBLE,
             ProviderId::OPENAI_RESPONSES_COMPATIBLE,
             ProviderId::FORGE_SERVICES,
@@ -75,12 +73,10 @@ impl ProviderId {
     /// for acronyms).
     ///
     /// This converts snake_case IDs to proper display names:
-    /// - "openai" -> "OpenAI"
     /// - "openai_compatible" -> "OpenAICompatible"
     fn display_name(&self) -> String {
         // Special cases for known providers with acronyms
         match self.0.as_ref() {
-            "openai" => "OpenAI".to_string(),
             "openai_compatible" => "OpenAICompatible".to_string(),
             "openai_responses_compatible" => "OpenAIResponsesCompatible".to_string(),
             "forge_services" => "ForgeServices".to_string(),
@@ -106,7 +102,6 @@ impl std::str::FromStr for ProviderId {
         // Check if it's a built-in provider first
         let provider = match s {
             "forge" => ProviderId::FORGE,
-            "openai" => ProviderId::OPENAI,
             "openai_compatible" => ProviderId::OPENAI_COMPATIBLE,
             "openai_responses_compatible" => ProviderId::OPENAI_RESPONSES_COMPATIBLE,
             "forge_services" => ProviderId::FORGE_SERVICES,
@@ -288,16 +283,16 @@ mod test_helpers {
         })
     }
 
-    /// Test helper for creating an OpenAI provider
-    pub(super) fn openai(key: &str) -> Provider<Url> {
+    /// Test helper for creating an OpenAI-compatible provider
+    pub(super) fn openai_compatible(key: &str) -> Provider<Url> {
         Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: Default::default(),
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1/chat/completions").unwrap(),
             auth_methods: vec![crate::AuthMethod::ApiKey],
             url_params: vec![],
-            credential: make_credential(ProviderId::OPENAI, key),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, key),
             custom_headers: None,
             models: Some(ModelSource::Url(
                 Url::parse("https://api.openai.com/v1/models").unwrap(),
@@ -318,7 +313,6 @@ mod tests {
 
     #[test]
     fn test_provider_id_display_name() {
-        assert_eq!(ProviderId::OPENAI.to_string(), "OpenAI");
         assert_eq!(
             ProviderId::OPENAI_COMPATIBLE.to_string(),
             "OpenAICompatible"
@@ -331,13 +325,6 @@ mod tests {
         assert_eq!(ProviderId::LLAMA_CPP.to_string(), "LlamaCpp");
         assert_eq!(ProviderId::VLLM.to_string(), "Vllm");
         assert_eq!(ProviderId::OLLAMA.to_string(), "Ollama");
-    }
-
-    #[test]
-    fn test_openai_from_str() {
-        let actual = ProviderId::from_str("openai").unwrap();
-        let expected = ProviderId::OPENAI;
-        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -357,7 +344,6 @@ mod tests {
     #[test]
     fn test_built_in_providers_contains_expected() {
         let built_in = ProviderId::built_in_providers();
-        assert!(built_in.contains(&ProviderId::OPENAI));
         assert!(built_in.contains(&ProviderId::OPENAI_COMPATIBLE));
         assert!(built_in.contains(&ProviderId::OPENAI_RESPONSES_COMPATIBLE));
         assert!(built_in.contains(&ProviderId::LLAMA_CPP));
@@ -365,16 +351,16 @@ mod tests {
     }
 
     #[test]
-    fn test_openai_fixture() {
+    fn test_openai_compatible_fixture() {
         let fixture = "test_key";
-        let actual = openai(fixture);
+        let actual = openai_compatible(fixture);
         let expected = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: Default::default(),
             response: Some(ProviderResponse::OpenAI),
             url: Url::from_str("https://api.openai.com/v1/chat/completions").unwrap(),
             credential: Some(AuthCredential {
-                id: ProviderId::OPENAI,
+                id: ProviderId::OPENAI_COMPATIBLE,
                 auth_details: AuthDetails::ApiKey(ApiKey::from(fixture.to_string())),
                 url_params: HashMap::new(),
             }),

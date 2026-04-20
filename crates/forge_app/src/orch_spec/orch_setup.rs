@@ -69,11 +69,11 @@ impl Default for TestContext {
                 .tool_supported(true)
                 .max_extensions(15),
             title: Some("test-conversation".into()),
-       agent: Agent::new(
-                AgentId::new("forge"),
-                ProviderId::OPENAI,
-                ModelId::new("gpt-4-0125-preview"),
-            )
+      agent: Agent::new(
+                 AgentId::new("forge"),
+                 ProviderId::OPENAI_COMPATIBLE,
+                 ModelId::new("gpt-4-0125-preview"),
+             )
             .system_prompt(Template::new("You are Forge"))
             .user_prompt(Template::new(USER_PROMPT))
             .tools(vec![("fs_read").into(), ("fs_write").into()]),

@@ -276,11 +276,11 @@ mod tests {
 
     fn openai(key: &str) -> Provider<Url> {
         Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1/chat/completions").unwrap(),
-            credential: make_credential(ProviderId::OPENAI, key),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, key),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::ApiKey],
             url_params: vec![],
@@ -343,11 +343,11 @@ mod tests {
 
     fn create_provider(base_url: &str) -> anyhow::Result<OpenAIProvider<MockHttpClient>> {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: reqwest::Url::parse(base_url)?,
-            credential: make_credential(ProviderId::OPENAI, "test-api-key"),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, "test-api-key"),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::ApiKey],
             url_params: vec![],

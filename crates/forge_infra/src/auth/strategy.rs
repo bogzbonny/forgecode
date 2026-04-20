@@ -683,7 +683,7 @@ mod tests {
     fn test_create_auth_strategy_api_key() {
         let factory = ForgeAuthStrategyFactory;
         let strategy = factory.create_auth_strategy(
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             forge_domain::AuthMethod::ApiKey,
             vec![],
         );
@@ -706,7 +706,7 @@ mod tests {
 
         let factory = ForgeAuthStrategyFactory;
         let strategy = factory.create_auth_strategy(
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             forge_domain::AuthMethod::OAuthCode(config),
             vec![],
         );
@@ -729,7 +729,7 @@ mod tests {
 
         let factory = ForgeAuthStrategyFactory;
         let strategy = factory.create_auth_strategy(
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             forge_domain::AuthMethod::OAuthDevice(config),
             vec![],
         );
@@ -752,7 +752,7 @@ mod tests {
 
         let factory = ForgeAuthStrategyFactory;
         let strategy = factory.create_auth_strategy(
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             forge_domain::AuthMethod::OAuthDevice(config),
             vec![],
         );
@@ -792,7 +792,7 @@ mod tests {
             "acct_123".to_string().into(),
         )]);
         let fixture_credential =
-            AuthCredential::new_oauth(ProviderId::OPENAI, fixture_tokens, fixture_config.clone())
+            AuthCredential::new_oauth(ProviderId::OPENAI_COMPATIBLE, fixture_tokens, fixture_config.clone())
                 .url_params(fixture_url_params.clone());
 
         let actual = refresh_oauth_credential(

@@ -339,11 +339,11 @@ mod tests {
 
     fn openai_responses(key: &str, url: &str) -> Provider<Url> {
         Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse(url).unwrap(),
-            credential: make_credential(ProviderId::OPENAI, key),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, key),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::ApiKey],
             url_params: vec![],
@@ -595,11 +595,11 @@ mod tests {
     #[test]
     fn test_openai_responses_provider_new_with_openai_responses_url() {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAIResponses),
             url: Url::parse("https://api.openai.com/v1/responses").unwrap(),
-            credential: make_credential(ProviderId::OPENAI, "test-key"),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, "test-key"),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::ApiKey],
             url_params: vec![],
@@ -621,12 +621,12 @@ mod tests {
     #[test]
     fn test_openai_responses_provider_new_with_oauth_with_api_key() {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1").unwrap(),
             credential: Some(forge_domain::AuthCredential {
-                id: ProviderId::OPENAI,
+                id: ProviderId::OPENAI_COMPATIBLE,
                 auth_details: forge_domain::AuthDetails::OAuthWithApiKey {
                     tokens: forge_domain::OAuthTokens::new(
                         "access-token",
@@ -662,12 +662,12 @@ mod tests {
     #[test]
     fn test_openai_responses_provider_new_with_oauth() {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1").unwrap(),
             credential: Some(forge_domain::AuthCredential {
-                id: ProviderId::OPENAI,
+                id: ProviderId::OPENAI_COMPATIBLE,
                 auth_details: forge_domain::AuthDetails::OAuth {
                     tokens: forge_domain::OAuthTokens::new(
                         "access-token",
@@ -702,7 +702,7 @@ mod tests {
     #[test]
     fn test_openai_responses_provider_new_without_credential() {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1").unwrap(),
@@ -734,11 +734,11 @@ mod tests {
     #[test]
     fn test_get_headers_with_oauth_device_custom_headers() {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1").unwrap(),
-            credential: make_credential(ProviderId::OPENAI, "test-key"),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, "test-key"),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::OAuthDevice(
                 forge_domain::OAuthConfig {
@@ -774,11 +774,11 @@ mod tests {
     #[test]
     fn test_get_headers_with_oauth_code_custom_headers() {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1").unwrap(),
-            credential: make_credential(ProviderId::OPENAI, "test-key"),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, "test-key"),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::OAuthCode(
                 forge_domain::OAuthConfig {
@@ -841,7 +841,7 @@ mod tests {
     #[test]
     fn test_get_headers_without_credential() {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1").unwrap(),
@@ -862,11 +862,11 @@ mod tests {
     #[test]
     fn test_get_headers_with_multiple_custom_headers() {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1").unwrap(),
-            credential: make_credential(ProviderId::OPENAI, "test-key"),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, "test-key"),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::OAuthDevice(
                 forge_domain::OAuthConfig {
@@ -906,11 +906,11 @@ mod tests {
     #[test]
     fn test_get_headers_with_openai_device_custom_headers() {
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1/chat/completions").unwrap(),
-            credential: make_credential(ProviderId::OPENAI, "test-token"),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, "test-token"),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::OAuthDevice(
                 forge_domain::OAuthConfig {
@@ -951,12 +951,12 @@ mod tests {
         );
 
         let provider = Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1").unwrap(),
             credential: Some(forge_domain::AuthCredential {
-                id: ProviderId::OPENAI,
+                id: ProviderId::OPENAI_COMPATIBLE,
                 auth_details: forge_domain::AuthDetails::ApiKey(forge_domain::ApiKey::from(
                     "test-key".to_string(),
                 )),

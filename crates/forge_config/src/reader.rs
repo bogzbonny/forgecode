@@ -241,7 +241,7 @@ mod tests {
         // it on top of the embedded defaults. The default values must survive.
         let legacy = ForgeConfig {
             session: Some(ModelConfig {
-                provider_id: "openai".to_string(),
+                provider_id: "openai_compatible".to_string(),
                 model_id: "gpt-4o".to_string(),
             }),
             ..Default::default()
@@ -259,7 +259,7 @@ mod tests {
         assert_eq!(
             actual.session,
             Some(ModelConfig {
-                provider_id: "openai".to_string(),
+                provider_id: "openai_compatible".to_string(),
                 model_id: "gpt-4o".to_string(),
             })
         );

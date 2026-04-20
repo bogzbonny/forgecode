@@ -54,7 +54,7 @@ mod tests {
 
         let agent = Agent::new(
             AgentId::new("test"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4"),
         )
         .temperature(Temperature::new(0.7).unwrap())

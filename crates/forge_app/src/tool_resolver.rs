@@ -110,7 +110,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("read"), ToolName::new("fs_search")]);
@@ -136,7 +136,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         );
 
@@ -157,7 +157,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![
@@ -182,7 +182,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![
@@ -213,7 +213,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("fs_*")]);
@@ -239,7 +239,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("fs_*")]);
@@ -263,7 +263,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("fs_*"), ToolName::new("shell")]);
@@ -290,7 +290,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("read?")]);
@@ -315,7 +315,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![
@@ -349,7 +349,7 @@ mod tests {
         // Agent uses old "search" name
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("read"), ToolName::new("search")]);
@@ -378,7 +378,7 @@ mod tests {
         // Agent configuration with lowercase
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("read"), ToolName::new("write")]);
@@ -402,7 +402,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("write")]);
@@ -421,7 +421,7 @@ mod tests {
 
         let fixture = Agent::new(
             AgentId::new("test-agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("task")]);

@@ -39,7 +39,8 @@ impl Transformer for ProviderPipeline<'_> {
         let kimi_k2_reasoning =
             KimiK2Reasoning.when(move |request: &Request| when_model("kimi")(request));
 
-        let trim_tool_call_ids = TrimToolCallIds.when(move |_| provider.id == ProviderId::OPENAI);
+        // TrimToolCallIds is no longer needed since we removed the direct OpenAI provider
+        let trim_tool_call_ids = TrimToolCallIds.when(move |_| false);
 
         let strict_schema = EnforceStrictToolSchema
             .pipe(EnforceStrictResponseFormatSchema)
@@ -97,15 +98,15 @@ mod tests {
         }
     }
 
-    fn openai(key: &str) -> Provider<Url> {
+    fn openai_compatible(key: &str) -> Provider<Url> {
         Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: Default::default(),
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1/chat/completions").unwrap(),
             auth_methods: vec![forge_domain::AuthMethod::ApiKey],
             url_params: vec![],
-            credential: make_credential(ProviderId::OPENAI, key),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, key),
             custom_headers: None,
             models: Some(ModelSource::Url(
                 Url::parse("https://api.openai.com/v1/models").unwrap(),
@@ -114,8 +115,8 @@ mod tests {
     }
 
     #[test]
-    fn test_openai_provider_trims_tool_call_ids() {
-        let provider = openai("openai");
+    fn test_openai_compatible_provider_does_not_trim_tool_call_ids() {
+        let provider = openai_compatible("openai");
         let long_id = "call_12345678901234567890123456789012345678901234567890";
 
         let fixture = Request::default().messages(vec![crate::dto::openai::Message {
@@ -134,50 +135,7 @@ mod tests {
         let mut pipeline = ProviderPipeline::new(&provider);
         let actual = pipeline.transform(fixture);
 
-        let expected_id = "call_12345678901234567890123456789012345";
-        assert_eq!(expected_id.len(), 40);
-
-        let messages = actual.messages.unwrap();
-        assert_eq!(
-            messages[0].tool_call_id.as_ref().unwrap().as_str(),
-            expected_id
-        );
-    }
-
-    #[test]
-    fn test_non_openai_provider_does_not_trim_tool_call_ids() {
-        let provider = Provider {
-            id: ProviderId::FORGE_SERVICES,
-            provider_type: Default::default(),
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://api.forge.com/v1/chat/completions").unwrap(),
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
-            url_params: vec![],
-            credential: make_credential(ProviderId::FORGE_SERVICES, "test-key"),
-            custom_headers: None,
-            models: Some(ModelSource::Url(
-                Url::parse("https://api.forge.com/v1/models").unwrap(),
-            )),
-        };
-        let long_id = "call_12345678901234567890123456789012345678901234567890";
-
-        let fixture = Request::default().messages(vec![crate::dto::openai::Message {
-            role: crate::dto::openai::Role::Tool,
-            content: None,
-            name: None,
-            tool_call_id: Some(forge_domain::ToolCallId::new(long_id)),
-            tool_calls: None,
-            reasoning_details: None,
-            reasoning_text: None,
-            reasoning_opaque: None,
-            reasoning_content: None,
-            extra_content: None,
-        }]);
-
-        let mut pipeline = ProviderPipeline::new(&provider);
-        let actual = pipeline.transform(fixture);
-
-        // Non-OpenAI provider should not trim tool call IDs
+        // OpenAI-compatible provider should not trim tool call IDs
         let messages = actual.messages.unwrap();
         assert_eq!(messages[0].tool_call_id.as_ref().unwrap().as_str(), long_id);
     }
@@ -293,8 +251,8 @@ mod tests {
     }
 
     #[test]
-    fn test_openai_provider_does_not_enforce_strict_tool_schema() {
-        let provider = openai("openai");
+    fn test_openai_compatible_provider_does_not_enforce_strict_tool_schema() {
+        let provider = openai_compatible("openai");
         let fixture = Request::default().tools(vec![crate::dto::openai::Tool {
             r#type: crate::dto::openai::FunctionType,
             function: crate::dto::openai::FunctionDescription {

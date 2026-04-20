@@ -206,14 +206,14 @@ mod tests {
 
     fn test_provider() -> Provider<Url> {
         Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: ProviderType::Llm,
             response: Some(forge_app::domain::ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1/chat/completions").unwrap(),
             auth_methods: vec![AuthMethod::ApiKey],
             url_params: vec![],
             credential: Some(AuthCredential {
-                id: ProviderId::OPENAI,
+                id: ProviderId::OPENAI_COMPATIBLE,
                 auth_details: AuthDetails::ApiKey(forge_domain::ApiKey::from(
                     "test-key".to_string(),
                 )),
@@ -228,7 +228,7 @@ mod tests {
 
     fn test_template_provider() -> ProviderTemplate {
         Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: ProviderType::Llm,
             response: Some(forge_app::domain::ProviderResponse::OpenAI),
             url: Template::<forge_domain::URLParameters>::new(
@@ -237,7 +237,7 @@ mod tests {
             auth_methods: vec![AuthMethod::ApiKey],
             url_params: vec![],
             credential: Some(AuthCredential {
-                id: ProviderId::OPENAI,
+                id: ProviderId::OPENAI_COMPATIBLE,
                 auth_details: AuthDetails::ApiKey(forge_domain::ApiKey::from(
                     "test-key".to_string(),
                 )),

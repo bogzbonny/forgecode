@@ -101,12 +101,12 @@ mod tests {
                 config: Arc::new(Mutex::new(ForgeConfig::default())),
                 providers: vec![
                     Provider {
-                        id: ProviderId::OPENAI,
+                        id: ProviderId::OPENAI_COMPATIBLE,
                         provider_type: Default::default(),
                         response: Some(ProviderResponse::OpenAI),
                         url: Url::parse("https://api.openai.com").unwrap(),
                         credential: Some(forge_domain::AuthCredential {
-                            id: ProviderId::OPENAI,
+                            id: ProviderId::OPENAI_COMPATIBLE,
                             auth_details: forge_domain::AuthDetails::ApiKey(
                                 forge_domain::ApiKey::from("test-key".to_string()),
                             ),
@@ -127,14 +127,14 @@ mod tests {
                         custom_headers: None,
                     },
                     Provider {
-                        id: ProviderId::OPENAI,
+                        id: ProviderId::OPENAI_COMPATIBLE,
                         provider_type: Default::default(),
                         response: Some(ProviderResponse::OpenAI),
                         url: Url::parse("https://api.openai.com").unwrap(),
                         auth_methods: vec![forge_domain::AuthMethod::ApiKey],
                         url_params: vec![],
                         credential: Some(forge_domain::AuthCredential {
-                            id: ProviderId::OPENAI,
+                            id: ProviderId::OPENAI_COMPATIBLE,
                             auth_details: forge_domain::AuthDetails::ApiKey(
                                 forge_domain::ApiKey::from("test-key".to_string()),
                             ),
@@ -317,12 +317,12 @@ mod tests {
 
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
-                DomainModelConfig::new(ProviderId::OPENAI, ModelId::new("gpt-4")),
+                DomainModelConfig::new(ProviderId::OPENAI_COMPATIBLE, ModelId::new("gpt-4")),
             )])
             .await?;
         let actual = service.get_session_config().await;
         let expected = Some(DomainModelConfig::new(
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4"),
         ));
 
@@ -334,13 +334,13 @@ mod tests {
     async fn test_get_session_config_when_provider_not_available() -> anyhow::Result<()> {
         let mut fixture = MockInfra::new();
         // Remove OpenAI from available providers but keep it in config
-        fixture.providers.retain(|p| p.id != ProviderId::OPENAI);
+        fixture.providers.retain(|p| p.id != ProviderId::OPENAI_COMPATIBLE);
         let service = ForgeAppConfigService::new(Arc::new(fixture.clone()));
 
         // Set OpenAI as the default provider in config (with a model)
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
-                DomainModelConfig::new(ProviderId::OPENAI, ModelId::new("gpt-4")),
+                DomainModelConfig::new(ProviderId::OPENAI_COMPATIBLE, ModelId::new("gpt-4")),
             )])
             .await?;
 
@@ -351,7 +351,7 @@ mod tests {
         assert_eq!(
             result,
             Some(DomainModelConfig::new(
-                ProviderId::OPENAI,
+                ProviderId::OPENAI_COMPATIBLE,
                 ModelId::new("gpt-4")
             ))
         );
@@ -365,13 +365,13 @@ mod tests {
 
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
-                DomainModelConfig::new(ProviderId::OPENAI, ModelId::new("gpt-4")),
+                DomainModelConfig::new(ProviderId::OPENAI_COMPATIBLE, ModelId::new("gpt-4")),
             )])
             .await?;
 
         let actual = service.get_session_config().await;
         let expected = Some(DomainModelConfig::new(
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4"),
         ));
 
@@ -397,7 +397,7 @@ mod tests {
 
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
-                DomainModelConfig::new(ProviderId::OPENAI, ModelId::new("gpt-4")),
+                DomainModelConfig::new(ProviderId::OPENAI_COMPATIBLE, ModelId::new("gpt-4")),
             )])
             .await?;
         let actual = service.get_session_config().await.map(|c| c.model);
@@ -414,7 +414,7 @@ mod tests {
 
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
-                DomainModelConfig::new(ProviderId::OPENAI, ModelId::from("gpt-4".to_string())),
+                DomainModelConfig::new(ProviderId::OPENAI_COMPATIBLE, ModelId::from("gpt-4".to_string())),
             )])
             .await?;
 
@@ -433,7 +433,7 @@ mod tests {
         // Set model for OpenAI first
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
-                DomainModelConfig::new(ProviderId::OPENAI, ModelId::from("gpt-4".to_string())),
+                DomainModelConfig::new(ProviderId::OPENAI_COMPATIBLE, ModelId::from("gpt-4".to_string())),
             )])
             .await?;
 
@@ -441,7 +441,7 @@ mod tests {
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
                 DomainModelConfig::new(
-                    ProviderId::OPENAI,
+                    ProviderId::OPENAI_COMPATIBLE,
                     ModelId::from("gpt-4".to_string()),
                 ),
             )])
@@ -451,7 +451,7 @@ mod tests {
         // provider/model pair wins
         let actual = service.get_session_config().await;
         let expected = Some(DomainModelConfig::new(
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-4"),
         ));
 

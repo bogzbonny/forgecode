@@ -64,7 +64,7 @@ impl Section {
 /// let info = Info::new()
 ///     .add_title("CONFIGURATION")
 ///     .add_key_value("Model", "gpt-4")
-///     .add_key_value("Provider", "openai")
+///     .add_key_value("Provider", "openai_compatible")
 ///     .add_key_value("Status", status::ENABLED)
 ///     .add_title("METRICS")
 ///     .add_key_value("Tokens", "1000")

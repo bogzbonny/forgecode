@@ -518,90 +518,7 @@ For backward compatibility, Forge still supports environment variables. On first
 <summary><strong>Legacy Environment Variable Setup (Deprecated)</strong></summary>
 
 <details>
-<summary><strong>OpenRouter</strong></summary>
-
-```bash
-# .env
-OPENROUTER_API_KEY=<your_openrouter_api_key>
-```
-
-</details>
-
-<details>
-<summary><strong>Requesty</strong></summary>
-
-```bash
-# .env
-REQUESTY_API_KEY=<your_requesty_api_key>
-```
-
-</details>
-
-<details>
-<summary><strong>x-ai</strong></summary>
-
-```bash
-# .env
-XAI_API_KEY=<your_xai_api_key>
-```
-
-</details>
-
-<details>
-<summary><strong>z.ai</strong></summary>
-
-```bash
-# .env
-ZAI_API_KEY=<your_zai_api_key>
-
-# Or for coding plan subscription
-ZAI_CODING_API_KEY=<your_zai_coding_api_key>
-```
-
-</details>
-
-<details>
-<summary><strong>Cerebras</strong></summary>
-
-```bash
-# .env
-CEREBRAS_API_KEY=<your_cerebras_api_key>
-```
-
-</details>
-
-<details>
-<summary><strong>IO Intelligence</strong></summary>
-
-```bash
-# .env
-IO_INTELLIGENCE_API_KEY=<your_io_intelligence_api_key>
-```
-
-```yaml
-# forge.yaml
-model: meta-llama/Llama-3.3-70B-Instruct
-```
-
-</details>
-
-<details>
-<summary><strong>OpenAI</strong></summary>
-
-```bash
-# .env
-OPENAI_API_KEY=<your_openai_api_key>
-```
-
-```yaml
-# forge.yaml
-model: o3-mini-high
-```
-
-</details>
-
-<details>
-<summary><strong>OpenAI-Compatible Providers</strong></summary>
+<summary><strong>OpenAI-Compatible Providers (llama.cpp, Ollama, vLLM, etc.)</strong></summary>
 
 ```bash
 # .env
@@ -626,7 +543,7 @@ FORGE_API_KEY=<your_forge_api_key>
 
 ```yaml
 # forge.yaml
-model: openai/gpt-4o
+model: openai_compatible/<model>
 ```
 
 </details>
@@ -837,7 +754,7 @@ Specify the default AI model to use for all agents in the workflow.
 
 ```yaml
 # forge.yaml
-model: "gpt-4o"
+model: openai_compatible/gpt-4o
 ```
 
 </details>

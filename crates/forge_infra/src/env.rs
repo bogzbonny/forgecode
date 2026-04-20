@@ -211,7 +211,7 @@ mod tests {
         apply_config_op(
             &mut fixture,
             ConfigOperation::SetSessionConfig(DomainModelConfig::new(
-                ProviderId::OPENAI,
+                ProviderId::OPENAI_COMPATIBLE,
                 ModelId::new("gpt-4-0125-preview"),
             )),
         );
@@ -219,7 +219,7 @@ mod tests {
         let actual_provider = fixture.session.as_ref().map(|s| s.provider_id.as_str());
         let actual_model = fixture.session.as_ref().map(|s| s.model_id.as_str());
 
-        assert_eq!(actual_provider, Some("openai"));
+        assert_eq!(actual_provider, Some("openai_compatible"));
         assert_eq!(actual_model, Some("gpt-4-0125-preview"));
     }
 
@@ -239,7 +239,7 @@ mod tests {
         apply_config_op(
             &mut fixture,
             ConfigOperation::SetSessionConfig(DomainModelConfig::new(
-                ProviderId::OPENAI,
+                ProviderId::OPENAI_COMPATIBLE,
                 ModelId::new("gpt-4-1106-preview"),
             )),
         );
@@ -247,7 +247,7 @@ mod tests {
         let actual_provider = fixture.session.as_ref().map(|s| s.provider_id.as_str());
         let actual_model = fixture.session.as_ref().map(|s| s.model_id.as_str());
 
-        assert_eq!(actual_provider, Some("openai"));
+        assert_eq!(actual_provider, Some("openai_compatible"));
         assert_eq!(actual_model, Some("gpt-4-1106-preview"));
     }
 
@@ -260,7 +260,7 @@ mod tests {
         apply_config_op(
             &mut fixture,
             ConfigOperation::SetSessionConfig(DomainModelConfig::new(
-                ProviderId::OPENAI,
+                ProviderId::OPENAI_COMPATIBLE,
                 ModelId::new("gpt-4-1106-preview"),
             )),
         );
@@ -268,7 +268,7 @@ mod tests {
         let actual_provider = fixture.session.as_ref().map(|s| s.provider_id.as_str());
         let actual_model = fixture.session.as_ref().map(|s| s.model_id.as_str());
 
-        assert_eq!(actual_provider, Some("openai"));
+        assert_eq!(actual_provider, Some("openai_compatible"));
         assert_eq!(actual_model, Some("gpt-4-1106-preview"));
     }
 }

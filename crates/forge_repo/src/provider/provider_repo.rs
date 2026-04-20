@@ -281,22 +281,10 @@ impl<
         let mut migrated_providers = Vec::new();
         let configs = self.get_merged_configs().await;
 
-        let has_openai_url = self.infra.get_env_var("OPENAI_URL").is_some();
-
         for config in configs {
             // Skip Forge provider and ContextEngine providers - they're not configurable
             // via env like other providers
             if config.id == ProviderId::FORGE || config.provider_type == ProviderType::ContextEngine
-            {
-                continue;
-            }
-
-            if config.id == ProviderId::OPENAI && has_openai_url {
-                continue;
-            }
-            if (config.id == ProviderId::OPENAI_COMPATIBLE
-                || config.id == ProviderId::OPENAI_RESPONSES_COMPATIBLE)
-                && !has_openai_url
             {
                 continue;
             }
@@ -516,24 +504,27 @@ mod tests {
         let configs = get_provider_configs();
         assert!(!configs.is_empty());
 
-        // Test that OpenAI config is loaded correctly
-        let openai_config = configs
+        // Test that openai_compatible config is loaded correctly
+        let openai_compat_config = configs
             .iter()
-            .find(|c| c.id == ProviderId::OPENAI)
+            .find(|c| c.id == ProviderId::OPENAI_COMPATIBLE)
             .unwrap();
         assert_eq!(
-            openai_config.api_key_vars,
+            openai_compat_config.api_key_vars,
             Some("OPENAI_API_KEY".to_string())
         );
-        assert!(openai_config.url_param_vars.is_empty());
         assert_eq!(
-            openai_config.response_type,
+            openai_compat_config.url_param_vars
+                .iter()
+                .map(|v| v.param_name())
+                .collect::<Vec<_>>(),
+            vec!["OPENAI_URL"]
+        );
+        assert_eq!(
+            openai_compat_config.response_type,
             Some(ProviderResponse::OpenAI)
         );
-        assert_eq!(
-            openai_config.url.as_str(),
-            "https://api.openai.com/v1/chat/completions"
-        );
+        assert!(openai_compat_config.url.contains("{{OPENAI_URL}}"));
     }
 
     #[test]
@@ -821,7 +812,7 @@ mod env_tests {
         }
     }
 
-  #[tokio::test]
+   #[tokio::test]
     async fn test_migration_from_env_to_file() {
         let mut env_vars = HashMap::new();
         env_vars.insert("OPENAI_API_KEY".to_string(), "test-openai-key".to_string());
@@ -840,11 +831,7 @@ mod env_tests {
         let credentials_guard = infra.credentials.lock().await;
         let credentials = credentials_guard.as_ref().unwrap();
 
-        // Should have migrated OpenAICompatible (not OpenAI)
-        assert!(
-            !credentials.iter().any(|c| c.id == ProviderId::OPENAI),
-            "Should NOT create OpenAI credential when OPENAI_URL is set"
-        );
+        // Should have migrated OpenAICompatible
         assert!(
             credentials
                 .iter()
@@ -877,6 +864,7 @@ mod env_tests {
     async fn test_migration_should_not_create_forge_services_credential() {
         let mut env_vars = HashMap::new();
         env_vars.insert("OPENAI_API_KEY".to_string(), "test-key".to_string());
+        env_vars.insert("OPENAI_URL".to_string(), "https://api.openai.com/v1".to_string());
 
         let infra = Arc::new(MockInfra::new(env_vars));
         let registry = ForgeProviderRepository::new(infra.clone());
@@ -896,15 +884,19 @@ mod env_tests {
             "Should NOT create forge_services credential during environment migration"
         );
 
-        // Verify only OpenAI credential was created
+        // Verify OpenAICompatible and OpenAIResponsesCompatible credentials were created
         assert_eq!(
             credentials.len(),
-            1,
-            "Should only have one credential (OpenAI)"
+            2,
+            "Should have two credentials (OpenAICompatible and OpenAIResponsesCompatible)"
         );
         assert!(
-            credentials.iter().any(|c| c.id == ProviderId::OPENAI),
-            "Should have OpenAI credential"
+            credentials.iter().any(|c| c.id == ProviderId::OPENAI_COMPATIBLE),
+            "Should have OpenAICompatible credential"
+        );
+        assert!(
+            credentials.iter().any(|c| c.id == ProviderId::OPENAI_RESPONSES_COMPATIBLE),
+            "Should have OpenAIResponsesCompatible credential"
         );
     }
 
@@ -914,6 +906,7 @@ mod env_tests {
     async fn test_default_provider_urls() {
         let mut env_vars = HashMap::new();
         env_vars.insert("OPENAI_API_KEY".to_string(), "test-key".to_string());
+        env_vars.insert("OPENAI_URL".to_string(), "https://api.openai.com/v1".to_string());
 
         let infra = Arc::new(MockInfra::new(env_vars));
         let registry = ForgeProviderRepository::new(infra);
@@ -923,18 +916,18 @@ mod env_tests {
 
         let providers = registry.get_all_providers().await.unwrap();
 
-        let openai_provider = providers
+        let openai_compat_provider = providers
             .iter()
             .find_map(|p| match p {
-                AnyProvider::Template(cp) if cp.id == ProviderId::OPENAI => Some(cp),
+                AnyProvider::Template(cp) if cp.id == ProviderId::OPENAI_COMPATIBLE => Some(cp),
                 _ => None,
             })
             .unwrap();
 
-        // Regular OpenAI provider returns template URL (not rendered)
+        // OpenAICompatible provider returns template URL (not rendered)
         assert_eq!(
-            openai_provider.url.template,
-            "https://api.openai.com/v1/chat/completions"
+            openai_compat_provider.url.template,
+            "{{OPENAI_URL}}/chat/completions"
         );
     }
 
@@ -949,12 +942,12 @@ mod env_tests {
         let base_path = temp_dir.path().to_path_buf();
 
         // Create a custom provider.json in the base directory
-        // Only override OpenAI, don't add custom providers
+        // Override openai_compatible provider
         let provider_json_path = base_path.join("provider.json");
         let mut file = std::fs::File::create(&provider_json_path).unwrap();
         let custom_config = r#"[
             {
-                "id": "openai",
+                "id": "openai_compatible",
                 "api_key_vars": "CUSTOM_OPENAI_KEY",
                 "url_param_vars": [],
                 "response_type": "OpenAI",
@@ -1146,17 +1139,17 @@ mod env_tests {
         // Get merged configs
         let merged_configs = registry.get_merged_configs().await;
 
-        // Verify OpenAI config was overridden
-        let openai_config = merged_configs
+        // Verify openai_compatible config was overridden
+        let openai_compat_config = merged_configs
             .iter()
-            .find(|c| c.id == ProviderId::OPENAI)
-            .expect("OpenAI config should exist");
+            .find(|c| c.id == ProviderId::OPENAI_COMPATIBLE)
+            .expect("openai_compatible config should exist");
         assert_eq!(
-            openai_config.api_key_vars,
+            openai_compat_config.api_key_vars,
             Some("CUSTOM_OPENAI_KEY".to_string())
         );
         assert_eq!(
-            openai_config.url.as_str(),
+            openai_compat_config.url.as_str(),
             "https://custom.openai.com/v1/chat/completions"
         );
 

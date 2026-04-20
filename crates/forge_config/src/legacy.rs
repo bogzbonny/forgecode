@@ -13,7 +13,7 @@ use crate::{ForgeConfig, ModelConfig};
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct LegacyConfig {
-    /// The active provider ID (e.g. `"openai"`).
+    /// The active provider ID (e.g. `"openai_compatible"`).
     #[serde(default)]
     provider: Option<String>,
     /// Map from provider ID to the model ID to use with that provider.

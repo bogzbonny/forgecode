@@ -1318,7 +1318,7 @@ mod tests {
     #[test]
     fn test_cli_provider_display_minimal() {
         let fixture = AnyProvider::Url(Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1/chat/completions").unwrap(),
@@ -1332,14 +1332,14 @@ mod tests {
         });
         let formatted = format!("{}", CliProvider(fixture));
         let actual = strip_ansi_codes(&formatted);
-        let expected = "✓ OpenAI                    [api.openai.com]";
+        let expected = "✓ OpenAICompatible          [api.openai.com]";
         assert_eq!(actual, expected);
     }
 
      #[test]
     fn test_cli_provider_display_with_subdomain() {
         let fixture = AnyProvider::Url(Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/subdomain/v1/chat/completions").unwrap(),
@@ -1353,7 +1353,7 @@ mod tests {
         });
         let formatted = format!("{}", CliProvider(fixture));
         let actual = strip_ansi_codes(&formatted);
-        let expected = "✓ OpenAI                    [api.openai.com]";
+        let expected = "✓ OpenAICompatible          [api.openai.com]";
         assert_eq!(actual, expected);
     }
 
@@ -1381,7 +1381,7 @@ mod tests {
      #[test]
     fn test_cli_provider_display_template() {
         let fixture = AnyProvider::Template(Provider {
-            id: ProviderId::OPENAI,
+            id: ProviderId::OPENAI_COMPATIBLE,
             provider_type: Default::default(),
             response: Some(ProviderResponse::OpenAI),
             url: Template::new("https://api.openai.com/v1/chat/completions"),
@@ -1395,7 +1395,7 @@ mod tests {
         });
         let formatted = format!("{}", CliProvider(fixture));
         let actual = strip_ansi_codes(&formatted);
-        let expected = format!("  OpenAI                    {}", markers::EMPTY);
+        let expected = format!("  OpenAICompatible          {}", markers::EMPTY);
         assert_eq!(actual, expected);
     }
 

@@ -315,7 +315,7 @@ mod tests {
     ) {
         let fixture = Agent::new(
             AgentId::new("test"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("selected-model"),
         )
         .compact(Compact::new().token_threshold(100_000_usize));
@@ -334,7 +334,7 @@ mod tests {
         // even when they're technically "within" the context window
         let fixture = Agent::new(
             AgentId::new("test"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("selected-model"),
         )
         .compact(Compact::new().token_threshold(60_000_usize));
@@ -352,7 +352,7 @@ mod tests {
     fn test_compaction_threshold_uses_configured_context_window_percentage_cap() {
         let fixture = Agent::new(
             AgentId::new("test"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("selected-model"),
         )
         .compact(
@@ -373,7 +373,7 @@ mod tests {
     fn test_compaction_threshold_uses_hardcoded_cap_when_context_window_cap_is_higher() {
         let fixture = Agent::new(
             AgentId::new("test"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("selected-model"),
         );
 
@@ -391,7 +391,7 @@ mod tests {
         // based on a default context window of 128K (70% = 89.6K)
         let fixture = Agent::new(
             AgentId::new("test"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("selected-model"),
         )
         .compact(Compact::new().token_threshold(100_000_usize));
@@ -412,7 +412,7 @@ mod tests {
         // Agent with NO token_threshold set (default Compact)
         let fixture = Agent::new(
             AgentId::new("test"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-5.4-2026-03-05"),
         );
         // Verify default has no threshold
@@ -438,7 +438,7 @@ mod tests {
         // Simulates the embedded default config: token_threshold = 100000
         let fixture = Agent::new(
             AgentId::new("test"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("gpt-5.4-2026-03-05"),
         );
         let selected_model = model_fixture("gpt-5.4-2026-03-05", Some(1_000_000));
@@ -469,7 +469,7 @@ mod tests {
         // Agent with no compact config
         let fixture = Agent::new(
             AgentId::new("test"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::new("unknown-model"),
         );
 

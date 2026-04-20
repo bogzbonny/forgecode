@@ -296,7 +296,7 @@ mod tests {
     fn fixture_agent_without_user_prompt() -> Agent {
         Agent::new(
             AgentId::from("test_agent"),
-            ProviderId::OPENAI,
+            ProviderId::OPENAI_COMPATIBLE,
             ModelId::from("test-model"),
         )
     }
