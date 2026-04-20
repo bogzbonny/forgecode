@@ -711,14 +711,17 @@
     },
     "ProviderResponseType": {
       "description": "Wire protocol a provider uses for chat completions.",
-      "type": "string",
-      "enum": [
-        "OpenAI",
-        "OpenAIResponses",
-        "Anthropic",
-        "Bedrock",
-        "Google",
-        "OpenCode"
+      "oneOf": [
+        {
+          "description": "OpenAI-compatible chat completions API",
+          "type": "string",
+          "const": "OpenAI"
+        },
+        {
+          "description": "OpenAI Responses API",
+          "type": "string",
+          "const": "OpenAIResponses"
+        }
       ]
     },
     "ProviderTypeEntry": {

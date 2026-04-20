@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use anyhow::Context as _;
 use async_openai::types::responses as oai;
-use eventsource_stream::Eventsource;
 use forge_app::domain::{
     ChatCompletionMessage, Context as ChatContext, Model, ModelId, ResultStream,
 };
@@ -40,9 +39,7 @@ impl<H: HttpInfra> OpenAIResponsesProvider<H> {
     pub fn new(provider: Provider<Url>, http: Arc<H>) -> Self {
         use forge_domain::ProviderId;
 
-        if provider.id == ProviderId::CODEX
-            || provider.id == ProviderId::OPENCODE_ZEN
-            || provider.id == ProviderId::OPENAI_RESPONSES_COMPATIBLE
+        if provider.id == ProviderId::OPENAI_RESPONSES_COMPATIBLE
         {
             // These providers already configure a complete Responses endpoint,
             // so preserve the configured path exactly as-is.
@@ -104,6 +101,7 @@ impl<H: HttpInfra> OpenAIResponsesProvider<H> {
                         });
                     }
                 }
+                forge_domain::AuthMethod::GoogleAdc => {}
                 forge_domain::AuthMethod::CodexDevice(oauth_config) => {
                     if let Some(custom_headers) = &oauth_config.custom_headers {
                         custom_headers.iter().for_each(|(k, v)| {
@@ -111,32 +109,7 @@ impl<H: HttpInfra> OpenAIResponsesProvider<H> {
                         });
                     }
                 }
-                forge_domain::AuthMethod::GoogleAdc => {}
             });
-
-        // Codex provider requires the ChatGPT-Account-Id header extracted
-        // from the JWT at login.
-        //
-        // Mirror codex-rs conversation continuity headers by sending:
-        // - x-client-request-id: conversation id
-        // - session_id: conversation id
-        if self.provider.id == forge_domain::ProviderId::CODEX {
-            if let Some(conversation_id) = conversation_id {
-                headers.push((
-                    "x-client-request-id".to_string(),
-                    conversation_id.to_string(),
-                ));
-                headers.push(("session_id".to_string(), conversation_id.to_string()));
-            }
-
-            // Add ChatGPT-Account-Id from credential's stored url_params.
-            if let Some(account_id) = self.provider.credential.as_ref().and_then(|c| {
-                let key: forge_domain::URLParam = "chatgpt_account_id".to_string().into();
-                c.url_params.get(&key)
-            }) {
-                headers.push(("ChatGPT-Account-Id".to_string(), account_id.to_string()));
-            }
-        }
 
         headers
     }
@@ -153,12 +126,6 @@ impl<T: HttpInfra> OpenAIResponsesProvider<T> {
         let mut request = oai::CreateResponse::from_domain(context)?;
         request.model = Some(model.as_str().to_string());
 
-        // Apply Codex-specific request adjustments via the transformer pipeline.
-        if self.provider.id == forge_domain::ProviderId::CODEX {
-            use forge_domain::Transformer;
-            request = super::codex_transformer::CodexTransformer.transform(request);
-        }
-
         info!(
             url = %self.responses_url,
             base_url = %self.api_base,
@@ -170,16 +137,6 @@ impl<T: HttpInfra> OpenAIResponsesProvider<T> {
 
         let json_bytes = serde_json::to_vec(&request)
             .with_context(|| "Failed to serialize OpenAI Responses request")?;
-
-        // The Codex backend at chatgpt.com does not return
-        // `Content-Type: text/event-stream`, which causes the
-        // reqwest-eventsource library to reject the response with
-        // `InvalidContentType`. We bypass it by making a direct HTTP POST
-        // and parsing SSE from the raw byte stream using
-        // eventsource-stream, exactly like the AI SDK does.
-        if self.provider.id == forge_domain::ProviderId::CODEX {
-            return self.chat_codex_stream(headers, json_bytes).await;
-        }
 
         let source = self
             .http
@@ -235,72 +192,6 @@ impl<T: HttpInfra> OpenAIResponsesProvider<T> {
         stream.into_domain()
     }
 
-    /// Streams a Codex chat response by making a direct HTTP POST and
-    /// parsing SSE from the raw byte stream, bypassing Content-Type
-    /// validation that `reqwest-eventsource` enforces.
-    async fn chat_codex_stream(
-        &self,
-        headers: reqwest::header::HeaderMap,
-        json_bytes: Vec<u8>,
-    ) -> ResultStream<ChatCompletionMessage, anyhow::Error> {
-        let response = self
-            .http
-            .http_post(&self.responses_url, Some(headers), json_bytes.into())
-            .await
-            .with_context(|| format_http_context(None, "POST", &self.responses_url))?;
-
-        let status = response.status();
-        if !status.is_success() {
-            let error_body = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "Unable to read response body".to_string());
-            return Err(anyhow::anyhow!(error_body))
-                .with_context(|| format_http_context(Some(status), "POST", &self.responses_url));
-        }
-
-        // Parse the raw byte stream as SSE events using eventsource-stream.
-        // This mirrors the AI SDK approach: TextDecoderStream ->
-        // EventSourceParserStream -> JSON parse, without any Content-Type
-        // requirement.
-        let byte_stream = response.bytes_stream();
-        let event_stream = byte_stream
-            .eventsource()
-            .filter_map(|event_result| async move {
-                match event_result {
-                    Ok(event) if ["[DONE]", ""].contains(&event.data.as_str()) => None,
-                    Ok(event) => {
-                        let result = serde_json::from_str::<super::response::ResponsesStreamEvent>(
-                            &event.data,
-                        )
-                        .with_context(|| format!("Failed to parse SSE event: {}", event.data));
-                        match result {
-                            Ok(super::response::ResponsesStreamEvent::Keepalive { .. }) => None,
-                            Ok(super::response::ResponsesStreamEvent::Ping { cost }) => {
-                                let usage =
-                                    forge_domain::Usage { cost: Some(cost), ..Default::default() };
-                                Some(Ok(super::response::StreamItem::Message(Box::new(
-                                    ChatCompletionMessage::assistant(forge_domain::Content::part(
-                                        "",
-                                    ))
-                                    .usage(usage),
-                                ))))
-                            }
-                            Ok(super::response::ResponsesStreamEvent::Unknown(_)) => None,
-                            Ok(super::response::ResponsesStreamEvent::Response(inner)) => {
-                                Some(Ok(super::response::StreamItem::Event(inner)))
-                            }
-                            Err(e) => Some(Err(e)),
-                        }
-                    }
-                    Err(e) => Some(Err(into_sse_parse_error(e))),
-                }
-            });
-
-        use crate::provider::IntoDomain;
-        let stream: BoxStream<super::response::StreamItem, anyhow::Error> = Box::pin(event_stream);
-        stream.into_domain()
-    }
 }
 
 fn into_sse_parse_error<E>(error: eventsource_stream::EventStreamError<E>) -> anyhow::Error
@@ -711,13 +602,13 @@ mod tests {
     }
 
     #[test]
-    fn test_openai_responses_provider_new_with_codex_url() {
+    fn test_openai_responses_provider_new_with_openai_responses_url() {
         let provider = Provider {
-            id: ProviderId::CODEX,
+            id: ProviderId::OPENAI,
             provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://chatgpt.com/backend-api/codex/responses").unwrap(),
-            credential: make_credential(ProviderId::CODEX, "test-key"),
+            response: Some(ProviderResponse::OpenAIResponses),
+            url: Url::parse("https://api.openai.com/v1/responses").unwrap(),
+            credential: make_credential(ProviderId::OPENAI, "test-key"),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::ApiKey],
             url_params: vec![],
@@ -728,11 +619,11 @@ mod tests {
 
         assert_eq!(
             provider_impl.responses_url.as_str(),
-            "https://chatgpt.com/backend-api/codex/responses"
+            "https://api.openai.com/v1/responses"
         );
         assert_eq!(
             provider_impl.api_base.as_str(),
-            "https://chatgpt.com/backend-api/codex"
+            "https://api.openai.com/v1"
         );
     }
 
@@ -1022,13 +913,13 @@ mod tests {
     }
 
     #[test]
-    fn test_get_headers_with_codex_device_custom_headers() {
+    fn test_get_headers_with_openai_device_custom_headers() {
         let provider = Provider {
-            id: ProviderId::CODEX,
+            id: ProviderId::OPENAI,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://chatgpt.com/backend-api/codex/responses").unwrap(),
-            credential: make_credential(ProviderId::CODEX, "test-token"),
+            credential: make_credential(ProviderId::OPENAI, "test-token"),
             custom_headers: None,
             auth_methods: vec![forge_domain::AuthMethod::CodexDevice(
                 forge_domain::OAuthConfig {
@@ -1066,82 +957,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_headers_codex_includes_chatgpt_account_id() {
-        let mut url_params = HashMap::new();
-        url_params.insert(
-            forge_domain::URLParam::from("chatgpt_account_id".to_string()),
-            forge_domain::URLParamValue::from("acct_test_123".to_string()),
-        );
-
-        let provider = Provider {
-            id: ProviderId::CODEX,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://chatgpt.com/backend-api/codex/responses").unwrap(),
-            credential: Some(forge_domain::AuthCredential {
-                id: ProviderId::CODEX,
-                auth_details: forge_domain::AuthDetails::OAuth {
-                    tokens: forge_domain::OAuthTokens::new(
-                        "access-token",
-                        None::<String>,
-                        chrono::Utc::now() + chrono::Duration::hours(1),
-                    ),
-                    config: forge_domain::OAuthConfig {
-                        auth_url: Url::parse(
-                            "https://auth.openai.com/api/accounts/deviceauth/usercode",
-                        )
-                        .unwrap(),
-                        token_url: Url::parse("https://auth.openai.com/oauth/token").unwrap(),
-                        client_id: forge_domain::ClientId::from("app_test".to_string()),
-                        scopes: vec![],
-                        redirect_uri: None,
-                        use_pkce: false,
-                        token_refresh_url: None,
-                        custom_headers: None,
-                        extra_auth_params: None,
-                    },
-                },
-                url_params,
-            }),
-            auth_methods: vec![],
-            url_params: vec![],
-            models: None,
-            custom_headers: None,
-        };
-
-        let infra = Arc::new(MockHttpClient { client: reqwest::Client::new() });
-        let provider_impl = OpenAIResponsesProvider::<MockHttpClient>::new(provider, infra);
-        let actual = provider_impl.get_headers();
-
-        let account_header = actual.iter().find(|(k, _)| k == "ChatGPT-Account-Id");
-        assert!(account_header.is_some());
-        assert_eq!(account_header.unwrap().1, "acct_test_123");
-    }
-
-    #[test]
-    fn test_get_headers_codex_omits_chatgpt_account_id_when_missing() {
-        let provider = Provider {
-            id: ProviderId::CODEX,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://chatgpt.com/backend-api/codex/responses").unwrap(),
-            credential: make_credential(ProviderId::CODEX, "test-token"),
-            custom_headers: None,
-            auth_methods: vec![],
-            url_params: vec![],
-            models: None,
-        };
-
-        let infra = Arc::new(MockHttpClient { client: reqwest::Client::new() });
-        let provider_impl = OpenAIResponsesProvider::<MockHttpClient>::new(provider, infra);
-        let actual = provider_impl.get_headers();
-
-        let account_header = actual.iter().find(|(k, _)| k == "ChatGPT-Account-Id");
-        assert!(account_header.is_none());
-    }
-
-    #[test]
-    fn test_get_headers_non_codex_does_not_include_chatgpt_account_id() {
+    fn test_get_headers_non_openai_does_not_include_chatgpt_account_id() {
         let mut url_params = HashMap::new();
         url_params.insert(
             forge_domain::URLParam::from("chatgpt_account_id".to_string()),
@@ -1172,81 +988,6 @@ mod tests {
 
         let account_header = actual.iter().find(|(k, _)| k == "ChatGPT-Account-Id");
         assert!(account_header.is_none());
-    }
-
-    #[test]
-    fn test_get_headers_codex_with_conversation_id_includes_conversation_headers() {
-        let provider = Provider {
-            id: ProviderId::CODEX,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://chatgpt.com/backend-api/codex/responses").unwrap(),
-            credential: make_credential(ProviderId::CODEX, "test-token"),
-            custom_headers: None,
-            auth_methods: vec![],
-            url_params: vec![],
-            models: None,
-        };
-
-        let infra = Arc::new(MockHttpClient { client: reqwest::Client::new() });
-        let provider_impl = OpenAIResponsesProvider::<MockHttpClient>::new(provider, infra);
-        let fixture = "conversation_test_123";
-
-        let actual = provider_impl.get_headers_for_conversation(Some(fixture));
-
-        let x_client_request_id = actual
-            .iter()
-            .find(|(k, _)| k == "x-client-request-id")
-            .map(|(_, v)| v.as_str());
-        let session_id = actual
-            .iter()
-            .find(|(k, _)| k == "session_id")
-            .map(|(_, v)| v.as_str());
-
-        let expected = Some(fixture);
-        assert_eq!(x_client_request_id, expected);
-        assert_eq!(session_id, expected);
-    }
-
-    #[test]
-    fn test_get_headers_non_codex_with_conversation_id_omits_conversation_headers() {
-        let provider = openai_responses("test-key", "https://api.openai.com/v1");
-        let infra = Arc::new(MockHttpClient { client: reqwest::Client::new() });
-        let provider_impl = OpenAIResponsesProvider::<MockHttpClient>::new(provider, infra);
-
-        let actual = provider_impl.get_headers_for_conversation(Some("conversation_test_123"));
-
-        let x_client_request_id = actual.iter().find(|(k, _)| k == "x-client-request-id");
-        let session_id = actual.iter().find(|(k, _)| k == "session_id");
-
-        assert!(x_client_request_id.is_none());
-        assert!(session_id.is_none());
-    }
-
-    #[test]
-    fn test_get_headers_codex_without_conversation_id_omits_conversation_headers() {
-        let provider = Provider {
-            id: ProviderId::CODEX,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://chatgpt.com/backend-api/codex/responses").unwrap(),
-            credential: make_credential(ProviderId::CODEX, "test-token"),
-            custom_headers: None,
-            auth_methods: vec![],
-            url_params: vec![],
-            models: None,
-        };
-
-        let infra = Arc::new(MockHttpClient { client: reqwest::Client::new() });
-        let provider_impl = OpenAIResponsesProvider::<MockHttpClient>::new(provider, infra);
-
-        let actual = provider_impl.get_headers_for_conversation(None);
-
-        let x_client_request_id = actual.iter().find(|(k, _)| k == "x-client-request-id");
-        let session_id = actual.iter().find(|(k, _)| k == "session_id");
-
-        assert!(x_client_request_id.is_none());
-        assert!(session_id.is_none());
     }
 
     #[tokio::test]
@@ -1325,200 +1066,4 @@ mod tests {
         Ok(())
     }
 
-    /// Tests the Codex direct streaming path (`chat_codex_stream`) which
-    /// bypasses the Content-Type validation enforced by reqwest-eventsource.
-    /// The mock server returns SSE data with `Content-Type:
-    /// application/octet-stream` (not `text/event-stream`), verifying the
-    /// bypass works correctly.
-    #[tokio::test]
-    async fn test_codex_provider_streams_without_text_event_stream_content_type()
-    -> anyhow::Result<()> {
-        let mut fixture = MockServer::new().await;
-
-        let events = vec![
-            "event: response.output_text.delta".to_string(),
-            format!(
-                "data: {}",
-                serde_json::json!({
-                    "type": "response.output_text.delta",
-                    "sequence_number": 1,
-                    "item_id": "item_1",
-                    "output_index": 0,
-                    "content_index": 0,
-                    "delta": "hello from codex"
-                })
-            ),
-            "event: response.completed".to_string(),
-            format!(
-                "data: {}",
-                serde_json::json!({
-                    "type": "response.completed",
-                    "sequence_number": 2,
-                    "response": openai_response_fixture()
-                })
-            ),
-            "event: done".to_string(),
-            "data: [DONE]".to_string(),
-        ];
-
-        let mock = fixture
-            .mock_codex_responses_stream("/backend-api/codex/responses", events, 200)
-            .await;
-
-        let codex_url = format!("{}/backend-api/codex/responses", fixture.url());
-        let provider = Provider {
-            id: ProviderId::CODEX,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse(&codex_url).unwrap(),
-            credential: make_credential(ProviderId::CODEX, "test-codex-token"),
-            custom_headers: None,
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
-            url_params: vec![],
-            models: None,
-        };
-
-        let infra = Arc::new(MockHttpClient { client: reqwest::Client::new() });
-        let provider_impl = OpenAIResponsesProvider::new(provider, infra);
-        let context = ChatContext::default()
-            .add_message(ContextMessage::user("Hi", None))
-            .stream(true);
-
-        let mut stream = provider_impl
-            .chat(&ModelId::from("gpt-5.1-codex-mini"), context)
-            .await?;
-
-        let first = stream.next().await.expect("stream should yield")?;
-        mock.assert_async().await;
-        assert_eq!(first.content, Some(Content::part("hello from codex")));
-
-        let second = stream
-            .next()
-            .await
-            .expect("stream should yield second message")?;
-        assert_eq!(second.finish_reason, Some(FinishReason::Stop));
-
-        Ok(())
-    }
-
-    /// Tests that the Codex stream silently skips keepalive events that
-    /// cannot be deserialized as `ResponseStreamEvent`.
-    #[tokio::test]
-    async fn test_codex_provider_skips_keepalive_events() -> anyhow::Result<()> {
-        let mut fixture = MockServer::new().await;
-
-        let events = vec![
-            "event: response.output_text.delta".to_string(),
-            format!(
-                "data: {}",
-                serde_json::json!({
-                    "type": "response.output_text.delta",
-                    "sequence_number": 1,
-                    "item_id": "item_1",
-                    "output_index": 0,
-                    "content_index": 0,
-                    "delta": "hello"
-                })
-            ),
-            // Keepalive event that should be silently skipped
-            "event: keepalive".to_string(),
-            format!(
-                "data: {}",
-                serde_json::json!({
-                    "type": "keepalive",
-                    "sequence_number": 2
-                })
-            ),
-            "event: response.completed".to_string(),
-            format!(
-                "data: {}",
-                serde_json::json!({
-                    "type": "response.completed",
-                    "sequence_number": 3,
-                    "response": openai_response_fixture()
-                })
-            ),
-            "event: done".to_string(),
-            "data: [DONE]".to_string(),
-        ];
-
-        let mock = fixture
-            .mock_codex_responses_stream("/backend-api/codex/responses", events, 200)
-            .await;
-
-        let codex_url = format!("{}/backend-api/codex/responses", fixture.url());
-        let provider = Provider {
-            id: ProviderId::CODEX,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse(&codex_url).unwrap(),
-            credential: make_credential(ProviderId::CODEX, "test-codex-token"),
-            custom_headers: None,
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
-            url_params: vec![],
-            models: None,
-        };
-
-        let infra = Arc::new(MockHttpClient { client: reqwest::Client::new() });
-        let provider_impl = OpenAIResponsesProvider::new(provider, infra);
-        let context = ChatContext::default()
-            .add_message(ContextMessage::user("Hi", None))
-            .stream(true);
-
-        let mut stream = provider_impl
-            .chat(&ModelId::from("gpt-5.1-codex-mini"), context)
-            .await?;
-
-        // First message should be the text delta (keepalive was skipped)
-        let first = stream.next().await.expect("stream should yield")?;
-        mock.assert_async().await;
-        assert_eq!(first.content, Some(Content::part("hello")));
-
-        // Second message should be the completion event
-        let second = stream
-            .next()
-            .await
-            .expect("stream should yield second message")?;
-        assert_eq!(second.finish_reason, Some(FinishReason::Stop));
-
-        Ok(())
-    }
-
-    /// Tests that the Codex stream correctly returns an error for non-success
-    /// HTTP status codes.
-    #[tokio::test]
-    async fn test_codex_provider_stream_returns_error_on_non_success() -> anyhow::Result<()> {
-        let mut fixture = MockServer::new().await;
-
-        let _mock = fixture
-            .mock_codex_responses_stream("/backend-api/codex/responses", vec![], 400)
-            .await;
-
-        let codex_url = format!("{}/backend-api/codex/responses", fixture.url());
-        let provider = Provider {
-            id: ProviderId::CODEX,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse(&codex_url).unwrap(),
-            credential: make_credential(ProviderId::CODEX, "test-codex-token"),
-            custom_headers: None,
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
-            url_params: vec![],
-            models: None,
-        };
-
-        let infra = Arc::new(MockHttpClient { client: reqwest::Client::new() });
-        let provider_impl = OpenAIResponsesProvider::new(provider, infra);
-        let context = ChatContext::default()
-            .add_message(ContextMessage::user("Hi", None))
-            .stream(true);
-
-        let actual = provider_impl
-            .chat(&ModelId::from("gpt-5.1-codex"), context)
-            .await;
-
-        assert!(actual.is_err());
-
-        Ok(())
-    }
-}
+  }

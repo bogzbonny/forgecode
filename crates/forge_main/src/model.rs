@@ -1336,24 +1336,24 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
-    #[test]
+     #[test]
     fn test_cli_provider_display_with_subdomain() {
         let fixture = AnyProvider::Url(Provider {
-            id: ProviderId::OPEN_ROUTER,
+            id: ProviderId::OPENAI,
             provider_type: forge_domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://openrouter.ai/api/v1/chat/completions").unwrap(),
+            url: Url::parse("https://api.openai.com/subdomain/v1/chat/completions").unwrap(),
             auth_methods: vec![forge_domain::AuthMethod::ApiKey],
             url_params: vec![],
             credential: None,
             custom_headers: None,
             models: Some(ModelSource::Url(
-                Url::parse("https://openrouter.ai/api/v1/models").unwrap(),
+                Url::parse("https://api.openai.com/subdomain/v1/models").unwrap(),
             )),
         });
         let formatted = format!("{}", CliProvider(fixture));
         let actual = strip_ansi_codes(&formatted);
-        let expected = "✓ OpenRouter                [openrouter.ai]";
+        let expected = "✓ OpenAI                    [api.openai.com]";
         assert_eq!(actual, expected);
     }
 
@@ -1378,24 +1378,24 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
-    #[test]
+     #[test]
     fn test_cli_provider_display_template() {
         let fixture = AnyProvider::Template(Provider {
-            id: ProviderId::ANTHROPIC,
+            id: ProviderId::OPENAI,
             provider_type: Default::default(),
-            response: Some(ProviderResponse::Anthropic),
-            url: Template::new("https://api.anthropic.com/v1/messages"),
+            response: Some(ProviderResponse::OpenAI),
+            url: Template::new("https://api.openai.com/v1/chat/completions"),
             auth_methods: vec![forge_domain::AuthMethod::ApiKey],
             url_params: vec![],
             credential: None,
             custom_headers: None,
             models: Some(ModelSource::Url(Template::new(
-                "https://api.anthropic.com/v1/models",
+                "https://api.openai.com/v1/models",
             ))),
         });
         let formatted = format!("{}", CliProvider(fixture));
         let actual = strip_ansi_codes(&formatted);
-        let expected = format!("  Anthropic                 {}", markers::EMPTY);
+        let expected = format!("  OpenAI                    {}", markers::EMPTY);
         assert_eq!(actual, expected);
     }
 

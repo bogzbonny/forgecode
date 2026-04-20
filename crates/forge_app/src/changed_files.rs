@@ -172,7 +172,7 @@ mod tests {
         let services = Arc::new(TestServices { files, cwd });
         let agent = Agent::new(
             AgentId::new("test"),
-            ProviderId::ANTHROPIC,
+            ProviderId::OPENAI,
             ModelId::new("test-model"),
         );
         let changed_files = ChangedFiles::new(services, agent);

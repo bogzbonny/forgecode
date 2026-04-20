@@ -57,73 +57,6 @@ impl AuthStrategy for ApiKeyStrategy {
     }
 }
 
-/// Extract the ChatGPT account ID from a JWT token's claims.
-///
-/// Checks `chatgpt_account_id`, `https://api.openai.com/auth.chatgpt_account_id`,
-/// and `organizations[0].id` in that order, matching the opencode
-/// implementation.
-fn extract_chatgpt_account_id(token: &str) -> Option<String> {
-    let parts: Vec<&str> = token.split('.').collect();
-    if parts.len() != 3 {
-        return None;
-    }
-    use base64::Engine;
-    let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(parts.get(1)?)
-        .ok()?;
-    let claims: serde_json::Value = serde_json::from_slice(&payload).ok()?;
-
-    // Try chatgpt_account_id first
-    if let Some(id) = claims.get("chatgpt_account_id").and_then(|v| v.as_str()) {
-        return Some(id.to_string());
-    }
-    // Try nested auth claim
-    if let Some(id) = claims
-        .get("https://api.openai.com/auth")
-        .and_then(|v| v.get("chatgpt_account_id"))
-        .and_then(|v| v.as_str())
-    {
-        return Some(id.to_string());
-    }
-    // Fall back to organizations[0].id
-    if let Some(id) = claims
-        .get("organizations")
-        .and_then(|v| v.as_array())
-        .and_then(|orgs| orgs.first())
-        .and_then(|org| org.get("id").and_then(|v| v.as_str()))
-    {
-        return Some(id.to_string());
-    }
-    None
-}
-
-/// Adds Codex-specific credential metadata derived from OAuth tokens.
-///
-/// Tries to extract the account ID from the `id_token` first (which typically
-/// contains the user identity claims in OpenID Connect flows), then falls back
-/// to the `access_token` if needed.
-fn enrich_codex_oauth_credential(
-    provider_id: &ProviderId,
-    credential: &mut AuthCredential,
-    id_token: Option<&str>,
-    access_token: &str,
-) {
-    if *provider_id != ProviderId::CODEX {
-        return;
-    }
-
-    // Try id_token first (preferred for user identity claims)
-    let account_id = id_token
-        .and_then(extract_chatgpt_account_id)
-        .or_else(|| extract_chatgpt_account_id(access_token));
-
-    if let Some(account_id) = account_id {
-        credential
-            .url_params
-            .insert("chatgpt_account_id".to_string().into(), account_id.into());
-    }
-}
-
 /// OAuth Code Strategy - Browser redirect flow
 pub struct OAuthCodeStrategy<T> {
     provider_id: ProviderId,
@@ -176,18 +109,12 @@ impl<T: OAuthHttpProvider> AuthStrategy for OAuthCodeStrategy<T> {
 
                 let access_token = token_response.access_token.clone();
                 let id_token = token_response.id_token.clone();
-                let mut credential = build_oauth_credential(
+                let credential = build_oauth_credential(
                     self.provider_id.clone(),
                     token_response,
                     &ctx.request.oauth_config,
                     chrono::Duration::hours(1), // Code flow default
                 )?;
-                enrich_codex_oauth_credential(
-                    &self.provider_id,
-                    &mut credential,
-                    id_token.as_deref(),
-                    &access_token,
-                );
                 Ok(credential)
             }
             _ => Err(AuthError::InvalidContext("Expected Code context".to_string()).into()),
@@ -613,21 +540,12 @@ impl AuthStrategy for CodexDeviceStrategy {
 
                 let access_token = token_response.access_token.clone();
                 let id_token = token_response.id_token.clone();
-                let mut credential = build_oauth_credential(
+                let credential = build_oauth_credential(
                     self.provider_id.clone(),
                     token_response,
                     &self.config,
                     chrono::Duration::hours(1),
                 )?;
-
-                // Store account_id in url_params so it's persisted and available
-                // for chat request headers.
-                enrich_codex_oauth_credential(
-                    &self.provider_id,
-                    &mut credential,
-                    id_token.as_deref(),
-                    &access_token,
-                );
 
                 Ok(credential)
             }
@@ -1066,14 +984,7 @@ impl StrategyFactory for ForgeAuthStrategyFactory {
                 provider_id,
                 required_params,
             ))),
-            forge_domain::AuthMethod::OAuthCode(config) => {
-                if provider_id == ProviderId::CLAUDE_CODE {
-                    return Ok(AnyAuthStrategy::OAuthCodeAnthropic(OAuthCodeStrategy::new(
-                        AnthropicHttpProvider,
-                        provider_id,
-                        config,
-                    )));
-                }
+      forge_domain::AuthMethod::OAuthCode(config) => {
 
                 if provider_id == ProviderId::GITHUB_COPILOT {
                     return Ok(AnyAuthStrategy::OAuthCodeGithub(OAuthCodeStrategy::new(
@@ -1216,9 +1127,9 @@ mod tests {
             custom_headers: None,
         };
 
-        let factory = ForgeAuthStrategyFactory;
+       let factory = ForgeAuthStrategyFactory;
         let actual = factory.create_auth_strategy(
-            ProviderId::CODEX,
+            ProviderId::OPENAI,
             forge_domain::AuthMethod::CodexDevice(config),
             vec![],
         );
@@ -1231,128 +1142,9 @@ mod tests {
         use base64::Engine;
         let header = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .encode(r#"{"alg":"RS256","typ":"JWT"}"#);
-        let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
+       let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .encode(serde_json::to_vec(claims).unwrap());
         format!("{header}.{payload}.fake_signature")
-    }
-
-    #[test]
-    fn test_extract_chatgpt_account_id_from_direct_claim() {
-        let fixture = build_jwt(&serde_json::json!({
-            "chatgpt_account_id": "acct_123"
-        }));
-        let actual = extract_chatgpt_account_id(&fixture);
-        let expected = Some("acct_123".to_string());
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_extract_chatgpt_account_id_from_nested_claim() {
-        let fixture = build_jwt(&serde_json::json!({
-            "https://api.openai.com/auth": {
-                "chatgpt_account_id": "acct_nested_456"
-            }
-        }));
-        let actual = extract_chatgpt_account_id(&fixture);
-        let expected = Some("acct_nested_456".to_string());
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_extract_chatgpt_account_id_from_organizations() {
-        let fixture = build_jwt(&serde_json::json!({
-            "organizations": [
-                {"id": "org_789", "name": "My Org"}
-            ]
-        }));
-        let actual = extract_chatgpt_account_id(&fixture);
-        let expected = Some("org_789".to_string());
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_extract_chatgpt_account_id_prefers_direct_claim() {
-        let fixture = build_jwt(&serde_json::json!({
-            "chatgpt_account_id": "direct",
-            "https://api.openai.com/auth": {
-                "chatgpt_account_id": "nested"
-            },
-            "organizations": [{"id": "org"}]
-        }));
-        let actual = extract_chatgpt_account_id(&fixture);
-        let expected = Some("direct".to_string());
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_extract_chatgpt_account_id_returns_none_for_empty_claims() {
-        let fixture = build_jwt(&serde_json::json!({}));
-        let actual = extract_chatgpt_account_id(&fixture);
-        assert_eq!(actual, None);
-    }
-
-    #[test]
-    fn test_extract_chatgpt_account_id_returns_none_for_invalid_jwt() {
-        let actual = extract_chatgpt_account_id("not-a-jwt");
-        assert_eq!(actual, None);
-    }
-
-    #[test]
-    fn test_extract_chatgpt_account_id_returns_none_for_invalid_base64() {
-        let actual = extract_chatgpt_account_id("header.!!!invalid-base64!!!.signature");
-        assert_eq!(actual, None);
-    }
-
-    #[test]
-    fn test_extract_chatgpt_account_id_returns_none_for_empty_organizations() {
-        let fixture = build_jwt(&serde_json::json!({
-            "organizations": []
-        }));
-        let actual = extract_chatgpt_account_id(&fixture);
-        assert_eq!(actual, None);
-    }
-
-    #[test]
-    fn test_enrich_codex_oauth_credential_uses_id_token_claims() {
-        let fixture_id_token = build_jwt(&serde_json::json!({
-            "chatgpt_account_id": "acct_from_id_token"
-        }));
-        let fixture_access_token = "not-a-jwt";
-        let mut actual = AuthCredential::new_oauth(
-            ProviderId::CODEX,
-            OAuthTokens::new(
-                fixture_access_token,
-                None::<String>,
-                chrono::Utc::now() + chrono::Duration::hours(1),
-            ),
-            OAuthConfig {
-                client_id: "test".to_string().into(),
-                auth_url: Url::parse("https://example.com/auth").unwrap(),
-                token_url: Url::parse("https://example.com/token").unwrap(),
-                scopes: vec![],
-                redirect_uri: Some("http://localhost:1455/auth/callback".to_string()),
-                use_pkce: true,
-                token_refresh_url: None,
-                extra_auth_params: None,
-                custom_headers: None,
-            },
-        );
-
-        enrich_codex_oauth_credential(
-            &ProviderId::CODEX,
-            &mut actual,
-            Some(&fixture_id_token),
-            fixture_access_token,
-        );
-
-        let actual = actual
-            .url_params
-            .get(&URLParam::from("chatgpt_account_id".to_string()));
-        let expected = Some(&forge_domain::URLParamValue::from(
-            "acct_from_id_token".to_string(),
-        ));
-
-        assert_eq!(actual, expected);
     }
 
     #[tokio::test]
@@ -1378,7 +1170,7 @@ mod tests {
             "acct_123".to_string().into(),
         )]);
         let fixture_credential =
-            AuthCredential::new_oauth(ProviderId::CODEX, fixture_tokens, fixture_config.clone())
+            AuthCredential::new_oauth(ProviderId::OPENAI, fixture_tokens, fixture_config.clone())
                 .url_params(fixture_url_params.clone());
 
         let actual = refresh_oauth_credential(

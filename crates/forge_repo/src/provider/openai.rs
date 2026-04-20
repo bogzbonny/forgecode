@@ -1,4 +1,4 @@
-use std::sync::{Arc, LazyLock};
+use std::sync::Arc;
 
 use anyhow::{Context as _, Result};
 use forge_app::domain::{
@@ -103,22 +103,10 @@ impl<H: HttpInfra> OpenAIProvider<H> {
         headers
     }
 
-    /// Creates headers including Session-Id for zai and zai_coding providers
-    /// and GitHub Copilot optimization headers (x-initiator, Openai-Intent,
+    /// Creates headers including GitHub Copilot optimization headers (x-initiator, Openai-Intent,
     /// Copilot-Vision-Request, anthropic-beta)
     fn get_headers_with_request(&self, request: &Request) -> Vec<(String, String)> {
         let mut headers = self.get_headers();
-        // Add Session-Id header for zai and zai_coding providers
-        if let Some(session_id) = &request.session_id
-            && (self.provider.id == ProviderId::ZAI || self.provider.id == ProviderId::ZAI_CODING)
-        {
-            headers.push(("Session-Id".to_string(), session_id.clone()));
-            debug!(
-                provider = %self.provider.url,
-                session_id = %session_id,
-                "Added Session-Id header for zai provider"
-            );
-        }
 
         // Add GitHub Copilot optimization headers only for github_copilot provider
         if self.provider.id == ProviderId::GITHUB_COPILOT {
@@ -221,36 +209,30 @@ impl<H: HttpInfra> OpenAIProvider<H> {
     }
 
     async fn inner_models(&self) -> Result<Vec<forge_app::domain::Model>> {
-        // For Vertex AI, load models from static JSON file using VertexProvider logic
-        if self.provider.id == ProviderId::VERTEX_AI {
-            debug!("Loading Vertex AI models from static JSON file");
-            Ok(self.inner_vertex_models())
-        } else {
-            let models = self
-                .provider
-                .models()
-                .ok_or_else(|| anyhow::anyhow!("Provider models configuration is required"))?;
+        let models = self
+            .provider
+            .models()
+            .ok_or_else(|| anyhow::anyhow!("Provider models configuration is required"))?;
 
-            match models {
-                forge_domain::ModelSource::Url(url) => {
-                    debug!(url = %url, "Fetching models");
-                    match self.fetch_models(url.as_str()).await {
-                        Err(error) => {
-                            tracing::error!(error = ?error, "Failed to fetch models");
-                            anyhow::bail!(error)
-                        }
-                        Ok(response) => {
-                            let data: ListModelResponse = serde_json::from_str(&response)
-                                .with_context(|| format_http_context(None, "GET", url))
-                                .with_context(|| "Failed to deserialize models response")?;
-                            Ok(data.data.into_iter().map(Into::into).collect())
-                        }
+        match models {
+            forge_domain::ModelSource::Url(url) => {
+                debug!(url = %url, "Fetching models");
+                match self.fetch_models(url.as_str()).await {
+                    Err(error) => {
+                        tracing::error!(error = ?error, "Failed to fetch models");
+                        anyhow::bail!(error)
+                    }
+                    Ok(response) => {
+                        let data: ListModelResponse = serde_json::from_str(&response)
+                            .with_context(|| format_http_context(None, "GET", url))
+                            .with_context(|| "Failed to deserialize models response")?;
+                        Ok(data.data.into_iter().map(Into::into).collect())
                     }
                 }
-                forge_domain::ModelSource::Hardcoded(models) => {
-                    debug!("Using hardcoded models");
-                    Ok(models.clone())
-                }
+            }
+            forge_domain::ModelSource::Hardcoded(models) => {
+                debug!("Using hardcoded models");
+                Ok(models.clone())
             }
         }
     }
@@ -285,15 +267,7 @@ impl<H: HttpInfra> OpenAIProvider<H> {
         }
     }
 
-    /// Load Vertex AI models from static JSON file
-    fn inner_vertex_models(&self) -> Vec<forge_app::domain::Model> {
-        static VERTEX_MODELS: LazyLock<Vec<forge_app::domain::Model>> = LazyLock::new(|| {
-            let models = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../vertex.json"));
-            serde_json::from_str(models).unwrap()
-        });
-        VERTEX_MODELS.clone()
-    }
-}
+ }
 
 impl<T: HttpInfra> OpenAIProvider<T> {
     pub async fn chat(
@@ -406,53 +380,7 @@ mod tests {
         }
     }
 
-    fn zai(key: &str) -> Provider<Url> {
-        Provider {
-            id: ProviderId::ZAI,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://api.z.ai/api/paas/v4/chat/completions").unwrap(),
-            credential: make_credential(ProviderId::ZAI, key),
-            custom_headers: None,
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
-            url_params: vec![],
-            models: Some(forge_domain::ModelSource::Url(
-                Url::parse("https://api.z.ai/api/paas/v4/models").unwrap(),
-            )),
-        }
-    }
-
-    fn zai_coding(key: &str) -> Provider<Url> {
-        Provider {
-            id: ProviderId::ZAI_CODING,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://api.z.ai/api/coding/paas/v4/chat/completions").unwrap(),
-            credential: make_credential(ProviderId::ZAI_CODING, key),
-            custom_headers: None,
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
-            url_params: vec![],
-            models: Some(forge_domain::ModelSource::Url(
-                Url::parse("https://api.z.ai/api/paas/v4/models").unwrap(),
-            )),
-        }
-    }
-
-    fn anthropic(key: &str) -> Provider<Url> {
-        Provider {
-            id: ProviderId::ANTHROPIC,
-            provider_type: forge_domain::ProviderType::Llm,
-            response: Some(ProviderResponse::Anthropic),
-            url: Url::parse("https://api.anthropic.com/v1/messages").unwrap(),
-            credential: make_credential(ProviderId::ANTHROPIC, key),
-            custom_headers: None,
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
-            url_params: vec![],
-            models: Some(forge_domain::ModelSource::Url(
-                Url::parse("https://api.anthropic.com/v1/models").unwrap(),
-            )),
-        }
-    }
+ 
 
     // Mock implementation of HttpInfra for testing
     #[derive(Clone)]
@@ -657,64 +585,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_headers_with_request_zai_provider() -> anyhow::Result<()> {
-        let provider = zai("test-key");
-        let http_client = Arc::new(MockHttpClient::new());
-        let openai_provider = OpenAIProvider::new(provider, http_client);
-
-        // Create a request with session_id
-        let request = Request {
-            session_id: Some("test-conversation-id".to_string()),
-            ..Default::default()
-        };
-
-        let headers = openai_provider.get_headers_with_request(&request);
-
-        // Should have Authorization and Session-Id headers
-        assert_eq!(headers.len(), 2);
-        assert!(
-            headers
-                .iter()
-                .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
-        );
-        assert!(
-            headers
-                .iter()
-                .any(|(k, v)| k == "Session-Id" && v == "test-conversation-id")
-        );
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_get_headers_with_request_zai_coding_provider() -> anyhow::Result<()> {
-        let provider = zai_coding("test-key");
-        let http_client = Arc::new(MockHttpClient::new());
-        let openai_provider = OpenAIProvider::new(provider, http_client);
-
-        // Create a request with session_id
-        let request = Request {
-            session_id: Some("test-conversation-id".to_string()),
-            ..Default::default()
-        };
-
-        let headers = openai_provider.get_headers_with_request(&request);
-
-        // Should have Authorization and Session-Id headers
-        assert_eq!(headers.len(), 2);
-        assert!(
-            headers
-                .iter()
-                .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
-        );
-        assert!(
-            headers
-                .iter()
-                .any(|(k, v)| k == "Session-Id" && v == "test-conversation-id")
-        );
-        Ok(())
-    }
-
-    #[tokio::test]
     async fn test_get_headers_with_request_openai_provider() -> anyhow::Result<()> {
         let provider = openai("test-key");
         let http_client = Arc::new(MockHttpClient::new());
@@ -728,81 +598,31 @@ mod tests {
 
         let headers = openai_provider.get_headers_with_request(&request);
 
-        // Should only have Authorization header (no Session-Id for non-zai providers)
+        // Should only have Authorization header
         assert_eq!(headers.len(), 1);
         assert!(
             headers
                 .iter()
                 .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
         );
-        assert!(!headers.iter().any(|(k, _)| k == "Session-Id"));
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_get_headers_with_request_zai_provider_no_session_id() -> anyhow::Result<()> {
-        let provider = zai("test-key");
-        let http_client = Arc::new(MockHttpClient::new());
-        let openai_provider = OpenAIProvider::new(provider, http_client);
-
-        // Create a request without session_id
-        let request = Request::default();
-
-        let headers = openai_provider.get_headers_with_request(&request);
-
-        // Should only have Authorization header (no Session-Id when session_id is None)
-        assert_eq!(headers.len(), 1);
-        assert!(
-            headers
-                .iter()
-                .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
-        );
-        assert!(!headers.iter().any(|(k, _)| k == "Session-Id"));
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_get_headers_with_request_anthropic_provider() -> anyhow::Result<()> {
-        let provider = anthropic("test-key");
-        let http_client = Arc::new(MockHttpClient::new());
-        let openai_provider = OpenAIProvider::new(provider, http_client);
-
-        // Create a request with session_id
-        let request = Request {
-            session_id: Some("test-conversation-id".to_string()),
-            ..Default::default()
-        };
-
-        let headers = openai_provider.get_headers_with_request(&request);
-
-        // Should only have Authorization header (no Session-Id for Anthropic providers)
-        assert_eq!(headers.len(), 1);
-        assert!(
-            headers
-                .iter()
-                .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
-        );
-        assert!(!headers.iter().any(|(k, _)| k == "Session-Id"));
         Ok(())
     }
 
     #[test]
     fn test_get_headers_fallback() -> anyhow::Result<()> {
-        let provider = zai("test-key");
+        let provider = openai("test-key");
         let http_client = Arc::new(MockHttpClient::new());
         let openai_provider = OpenAIProvider::new(provider, http_client);
 
         let headers = openai_provider.get_headers();
 
-        // Should only have Authorization header (fallback method doesn't add
-        // Session-Id)
+        // Should only have Authorization header
         assert_eq!(headers.len(), 1);
         assert!(
             headers
                 .iter()
                 .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
         );
-        assert!(!headers.iter().any(|(k, _)| k == "Session-Id"));
         Ok(())
     }
 
@@ -824,7 +644,7 @@ mod tests {
     fn test_get_headers_includes_custom_headers() {
         let mut provider = openai("test-key");
         let mut custom = std::collections::HashMap::new();
-        custom.insert("User-Agent".to_string(), "KimiCLI/1.0.0".to_string());
+        custom.insert("User-Agent".to_string(), "TestAgent/1.0.0".to_string());
         custom.insert("X-Custom".to_string(), "custom-value".to_string());
         provider.custom_headers = Some(custom);
 
@@ -835,7 +655,7 @@ mod tests {
         assert!(
             headers
                 .iter()
-                .any(|(k, v)| k == "User-Agent" && v == "KimiCLI/1.0.0")
+                .any(|(k, v)| k == "User-Agent" && v == "TestAgent/1.0.0")
         );
         assert!(
             headers

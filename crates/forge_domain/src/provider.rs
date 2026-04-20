@@ -47,34 +47,17 @@ impl ProviderId {
     // Built-in provider constants
     pub const FORGE: ProviderId = ProviderId(Cow::Borrowed("forge"));
     pub const OPENAI: ProviderId = ProviderId(Cow::Borrowed("openai"));
-    pub const OPEN_ROUTER: ProviderId = ProviderId(Cow::Borrowed("open_router"));
-    pub const REQUESTY: ProviderId = ProviderId(Cow::Borrowed("requesty"));
-    pub const ZAI: ProviderId = ProviderId(Cow::Borrowed("zai"));
-    pub const ZAI_CODING: ProviderId = ProviderId(Cow::Borrowed("zai_coding"));
-    pub const CEREBRAS: ProviderId = ProviderId(Cow::Borrowed("cerebras"));
-    pub const XAI: ProviderId = ProviderId(Cow::Borrowed("xai"));
-    pub const ANTHROPIC: ProviderId = ProviderId(Cow::Borrowed("anthropic"));
-    pub const CLAUDE_CODE: ProviderId = ProviderId(Cow::Borrowed("claude_code"));
-    pub const VERTEX_AI: ProviderId = ProviderId(Cow::Borrowed("vertex_ai"));
-    pub const VERTEX_AI_ANTHROPIC: ProviderId = ProviderId(Cow::Borrowed("vertex_ai_anthropic"));
-    pub const BIG_MODEL: ProviderId = ProviderId(Cow::Borrowed("big_model"));
     pub const AZURE: ProviderId = ProviderId(Cow::Borrowed("azure"));
     pub const GITHUB_COPILOT: ProviderId = ProviderId(Cow::Borrowed("github_copilot"));
     pub const OPENAI_COMPATIBLE: ProviderId = ProviderId(Cow::Borrowed("openai_compatible"));
     pub const OPENAI_RESPONSES_COMPATIBLE: ProviderId =
         ProviderId(Cow::Borrowed("openai_responses_compatible"));
-    pub const ANTHROPIC_COMPATIBLE: ProviderId = ProviderId(Cow::Borrowed("anthropic_compatible"));
     pub const FORGE_SERVICES: ProviderId = ProviderId(Cow::Borrowed("forge_services"));
-    pub const IO_INTELLIGENCE: ProviderId = ProviderId(Cow::Borrowed("io_intelligence"));
-    pub const BEDROCK: ProviderId = ProviderId(Cow::Borrowed("bedrock"));
-    pub const MINIMAX: ProviderId = ProviderId(Cow::Borrowed("minimax"));
-    pub const CODEX: ProviderId = ProviderId(Cow::Borrowed("codex"));
-    pub const OPENCODE_ZEN: ProviderId = ProviderId(Cow::Borrowed("opencode_zen"));
-    pub const OPENCODE_GO: ProviderId = ProviderId(Cow::Borrowed("opencode_go"));
-    pub const FIREWORKS_AI: ProviderId = ProviderId(Cow::Borrowed("fireworks-ai"));
-    pub const NOVITA: ProviderId = ProviderId(Cow::Borrowed("novita"));
-    pub const GOOGLE_AI_STUDIO: ProviderId = ProviderId(Cow::Borrowed("google_ai_studio"));
-    pub const MODAL: ProviderId = ProviderId(Cow::Borrowed("modal"));
+    pub const LLAMA_CPP: ProviderId = ProviderId(Cow::Borrowed("llama_cpp"));
+    pub const VLLM: ProviderId = ProviderId(Cow::Borrowed("vllm"));
+    pub const JAN_AI: ProviderId = ProviderId(Cow::Borrowed("jan_ai"));
+    pub const OLLAMA: ProviderId = ProviderId(Cow::Borrowed("ollama"));
+    pub const LM_STUDIO: ProviderId = ProviderId(Cow::Borrowed("lm_studio"));
 
     /// Returns all built-in provider IDs
     ///
@@ -83,33 +66,16 @@ impl ProviderId {
         &[
             ProviderId::FORGE,
             ProviderId::OPENAI,
-            ProviderId::OPEN_ROUTER,
-            ProviderId::REQUESTY,
-            ProviderId::ZAI,
-            ProviderId::ZAI_CODING,
-            ProviderId::CEREBRAS,
-            ProviderId::XAI,
-            ProviderId::ANTHROPIC,
-            ProviderId::CLAUDE_CODE,
-            ProviderId::VERTEX_AI,
-            ProviderId::VERTEX_AI_ANTHROPIC,
-            ProviderId::BIG_MODEL,
             ProviderId::AZURE,
             ProviderId::GITHUB_COPILOT,
             ProviderId::OPENAI_COMPATIBLE,
             ProviderId::OPENAI_RESPONSES_COMPATIBLE,
-            ProviderId::ANTHROPIC_COMPATIBLE,
             ProviderId::FORGE_SERVICES,
-            ProviderId::IO_INTELLIGENCE,
-            ProviderId::BEDROCK,
-            ProviderId::MINIMAX,
-            ProviderId::CODEX,
-            ProviderId::OPENCODE_ZEN,
-            ProviderId::OPENCODE_GO,
-            ProviderId::FIREWORKS_AI,
-            ProviderId::NOVITA,
-            ProviderId::GOOGLE_AI_STUDIO,
-            ProviderId::MODAL,
+            ProviderId::LLAMA_CPP,
+            ProviderId::VLLM,
+            ProviderId::JAN_AI,
+            ProviderId::OLLAMA,
+            ProviderId::LM_STUDIO,
         ]
     }
 
@@ -118,27 +84,15 @@ impl ProviderId {
     ///
     /// This converts snake_case IDs to proper display names:
     /// - "openai" -> "OpenAI"
-    /// - "open_router" -> "OpenRouter"
-    /// - "xai" -> "XAI"
+    /// - "openai_compatible" -> "OpenAICompatible"
     fn display_name(&self) -> String {
         // Special cases for known providers with acronyms
         match self.0.as_ref() {
             "openai" => "OpenAI".to_string(),
-            "xai" => "XAI".to_string(),
-            "zai" => "ZAI".to_string(),
-            "vertex_ai" => "VertexAI".to_string(),
-            "vertex_ai_anthropic" => "VertexAIAnthropic".to_string(),
             "openai_compatible" => "OpenAICompatible".to_string(),
             "openai_responses_compatible" => "OpenAIResponsesCompatible".to_string(),
-            "io_intelligence" => "IOIntelligence".to_string(),
-            "minimax" => "MiniMax".to_string(),
-            "codex" => "Codex".to_string(),
-            "opencode_zen" => "OpenCode Zen".to_string(),
-            "opencode_go" => "OpenCode Go".to_string(),
-            "fireworks-ai" => "FireworksAI".to_string(),
-            "novita" => "Novita".to_string(),
-            "google_ai_studio" => "GoogleAIStudio".to_string(),
-            "modal" => "Modal".to_string(),
+            "forge_services" => "ForgeServices".to_string(),
+            "github_copilot" => "GitHub Copilot".to_string(),
             _ => {
                 // For other providers, use UpperCamelCase conversion
                 use convert_case::{Case, Casing};
@@ -162,30 +116,16 @@ impl std::str::FromStr for ProviderId {
         let provider = match s {
             "forge" => ProviderId::FORGE,
             "openai" => ProviderId::OPENAI,
-            "open_router" => ProviderId::OPEN_ROUTER,
-            "requesty" => ProviderId::REQUESTY,
-            "zai" => ProviderId::ZAI,
-            "zai_coding" => ProviderId::ZAI_CODING,
-            "cerebras" => ProviderId::CEREBRAS,
-            "xai" => ProviderId::XAI,
-            "anthropic" => ProviderId::ANTHROPIC,
-            "claude_code" => ProviderId::CLAUDE_CODE,
-            "vertex_ai" => ProviderId::VERTEX_AI,
-            "big_model" => ProviderId::BIG_MODEL,
             "azure" => ProviderId::AZURE,
             "github_copilot" => ProviderId::GITHUB_COPILOT,
             "openai_compatible" => ProviderId::OPENAI_COMPATIBLE,
             "openai_responses_compatible" => ProviderId::OPENAI_RESPONSES_COMPATIBLE,
-            "anthropic_compatible" => ProviderId::ANTHROPIC_COMPATIBLE,
             "forge_services" => ProviderId::FORGE_SERVICES,
-            "io_intelligence" => ProviderId::IO_INTELLIGENCE,
-            "minimax" => ProviderId::MINIMAX,
-            "codex" => ProviderId::CODEX,
-            "opencode_go" => ProviderId::OPENCODE_GO,
-            "fireworks-ai" => ProviderId::FIREWORKS_AI,
-            "novita" => ProviderId::NOVITA,
-            "google_ai_studio" => ProviderId::GOOGLE_AI_STUDIO,
-            "modal" => ProviderId::MODAL,
+            "llama_cpp" => ProviderId::LLAMA_CPP,
+            "vllm" => ProviderId::VLLM,
+            "jan_ai" => ProviderId::JAN_AI,
+            "ollama" => ProviderId::OLLAMA,
+            "lm_studio" => ProviderId::LM_STUDIO,
             // For custom providers, use Cow::Owned to avoid memory leaks
             custom => ProviderId(Cow::Owned(custom.to_string())),
         };
@@ -201,12 +141,10 @@ impl From<String> for ProviderId {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ProviderResponse {
+    /// OpenAI-compatible chat completions API
     OpenAI,
+    /// OpenAI Responses API
     OpenAIResponses,
-    Anthropic,
-    Bedrock,
-    Google,
-    OpenCode,
 }
 
 /// Represents the source of models for a provider
@@ -363,40 +301,6 @@ mod test_helpers {
         })
     }
 
-    /// Test helper for creating a ZAI provider
-    pub(super) fn zai(key: &str) -> Provider<Url> {
-        Provider {
-            id: ProviderId::ZAI,
-            provider_type: Default::default(),
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://api.z.ai/api/paas/v4/chat/completions").unwrap(),
-            auth_methods: vec![crate::AuthMethod::ApiKey],
-            url_params: vec![],
-            credential: make_credential(ProviderId::ZAI, key),
-            custom_headers: None,
-            models: Some(ModelSource::Url(
-                Url::parse("https://api.z.ai/api/paas/v4/models").unwrap(),
-            )),
-        }
-    }
-
-    /// Test helper for creating a ZAI Coding provider
-    pub(super) fn zai_coding(key: &str) -> Provider<Url> {
-        Provider {
-            id: ProviderId::ZAI_CODING,
-            provider_type: Default::default(),
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://api.z.ai/api/coding/paas/v4/chat/completions").unwrap(),
-            auth_methods: vec![crate::AuthMethod::ApiKey],
-            url_params: vec![],
-            credential: make_credential(ProviderId::ZAI_CODING, key),
-            custom_headers: None,
-            models: Some(ModelSource::Url(
-                Url::parse("https://api.z.ai/api/paas/v4/models").unwrap(),
-            )),
-        }
-    }
-
     /// Test helper for creating an OpenAI provider
     pub(super) fn openai(key: &str) -> Provider<Url> {
         Provider {
@@ -410,82 +314,6 @@ mod test_helpers {
             custom_headers: None,
             models: Some(ModelSource::Url(
                 Url::parse("https://api.openai.com/v1/models").unwrap(),
-            )),
-        }
-    }
-
-    /// Test helper for creating an XAI provider
-    pub(super) fn xai(key: &str) -> Provider<Url> {
-        Provider {
-            id: ProviderId::XAI,
-            provider_type: Default::default(),
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://api.x.ai/v1/chat/completions").unwrap(),
-            auth_methods: vec![crate::AuthMethod::ApiKey],
-            url_params: vec![],
-            credential: make_credential(ProviderId::XAI, key),
-            custom_headers: None,
-            models: Some(ModelSource::Url(
-                Url::parse("https://api.x.ai/v1/models").unwrap(),
-            )),
-        }
-    }
-
-    /// Test helper for creating a Vertex AI provider
-    pub(super) fn vertex_ai(key: &str, project_id: &str, location: &str) -> Provider<Url> {
-        let (chat_url, model_url) = if location == "global" {
-            (
-                format!(
-                    "https://aiplatform.googleapis.com/v1/projects/{}/locations/{}/endpoints/openapi/chat/completions",
-                    project_id, location
-                ),
-                format!(
-                    "https://aiplatform.googleapis.com/v1/projects/{}/locations/{}/endpoints/openapi/models",
-                    project_id, location
-                ),
-            )
-        } else {
-            (
-                format!(
-                    "https://{}-aiplatform.googleapis.com/v1/projects/{}/locations/{}/endpoints/openapi/chat/completions",
-                    location, project_id, location
-                ),
-                format!(
-                    "https://{}-aiplatform.googleapis.com/v1/projects/{}/locations/{}/endpoints/openapi/models",
-                    location, project_id, location
-                ),
-            )
-        };
-        Provider {
-            id: ProviderId::VERTEX_AI,
-            provider_type: Default::default(),
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse(&chat_url).unwrap(),
-            auth_methods: vec![crate::AuthMethod::ApiKey],
-            url_params: ["project_id", "location"]
-                .iter()
-                .map(|&s| s.to_string().into())
-                .collect(),
-            credential: make_credential(ProviderId::VERTEX_AI, key),
-            custom_headers: None,
-            models: Some(ModelSource::Url(Url::parse(&model_url).unwrap())),
-        }
-    }
-
-    /// Test helper for creating an IO Intelligence provider
-    pub(super) fn io_intelligence(key: &str) -> Provider<Url> {
-        Provider {
-            id: ProviderId::IO_INTELLIGENCE,
-            provider_type: Default::default(),
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse("https://api.intelligence.io.solutions/api/v1/chat/completions")
-                .unwrap(),
-            auth_methods: vec![crate::AuthMethod::ApiKey],
-            url_params: vec![],
-            credential: make_credential(ProviderId::IO_INTELLIGENCE, key),
-            custom_headers: None,
-            models: Some(ModelSource::Url(
-                Url::parse("https://api.intelligence.io.solutions/api/v1/models").unwrap(),
             )),
         }
     }
@@ -536,12 +364,8 @@ mod tests {
     #[test]
     fn test_provider_id_display_name() {
         assert_eq!(ProviderId::OPENAI.to_string(), "OpenAI");
-        assert_eq!(ProviderId::OPEN_ROUTER.to_string(), "OpenRouter");
-        assert_eq!(ProviderId::ZAI.to_string(), "ZAI");
-        assert_eq!(ProviderId::XAI.to_string(), "XAI");
-        assert_eq!(ProviderId::ANTHROPIC.to_string(), "Anthropic");
-        assert_eq!(ProviderId::GITHUB_COPILOT.to_string(), "GithubCopilot");
-        assert_eq!(ProviderId::VERTEX_AI.to_string(), "VertexAI");
+        assert_eq!(ProviderId::AZURE.to_string(), "Azure");
+        assert_eq!(ProviderId::GITHUB_COPILOT.to_string(), "GitHub Copilot");
         assert_eq!(
             ProviderId::OPENAI_COMPATIBLE.to_string(),
             "OpenAICompatible"
@@ -550,182 +374,12 @@ mod tests {
             ProviderId::OPENAI_RESPONSES_COMPATIBLE.to_string(),
             "OpenAIResponsesCompatible"
         );
-        assert_eq!(
-            ProviderId::ANTHROPIC_COMPATIBLE.to_string(),
-            "AnthropicCompatible"
-        );
-        assert_eq!(ProviderId::IO_INTELLIGENCE.to_string(), "IOIntelligence");
-        assert_eq!(ProviderId::CODEX.to_string(), "Codex");
-        assert_eq!(ProviderId::FIREWORKS_AI.to_string(), "FireworksAI");
-        assert_eq!(ProviderId::OPENCODE_ZEN.to_string(), "OpenCode Zen");
-        assert_eq!(ProviderId::OPENCODE_GO.to_string(), "OpenCode Go");
-        assert_eq!(ProviderId::GOOGLE_AI_STUDIO.to_string(), "GoogleAIStudio");
-    }
-
-    #[test]
-    fn test_codex_from_str() {
-        let actual = ProviderId::from_str("codex").unwrap();
-        let expected = ProviderId::CODEX;
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_fireworks_ai_from_str() {
-        let actual = ProviderId::from_str("fireworks-ai").unwrap();
-        let expected = ProviderId::FIREWORKS_AI;
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_opencode_go_from_str() {
-        let actual = ProviderId::from_str("opencode_go").unwrap();
-        let expected = ProviderId::OPENCODE_GO;
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_codex_in_built_in_providers() {
-        let built_in = ProviderId::built_in_providers();
-        assert!(built_in.contains(&ProviderId::CODEX));
-        assert!(built_in.contains(&ProviderId::OPENAI_RESPONSES_COMPATIBLE));
-        assert!(built_in.contains(&ProviderId::FIREWORKS_AI));
-        assert!(built_in.contains(&ProviderId::OPENCODE_GO));
-        assert!(built_in.contains(&ProviderId::GOOGLE_AI_STUDIO));
-    }
-
-    #[test]
-    fn test_google_ai_studio_from_str() {
-        let actual = ProviderId::from_str("google_ai_studio").unwrap();
-        let expected = ProviderId::GOOGLE_AI_STUDIO;
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_modal_from_str() {
-        let actual = ProviderId::from_str("modal").unwrap();
-        let expected = ProviderId::MODAL;
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_modal_display_name() {
-        assert_eq!(ProviderId::MODAL.to_string(), "Modal");
-    }
-
-    #[test]
-    fn test_modal_in_built_in_providers() {
-        let built_in = ProviderId::built_in_providers();
-        assert!(built_in.contains(&ProviderId::MODAL));
-    }
-
-    #[test]
-    fn test_io_intelligence() {
-        let fixture = "test_key";
-        let actual = io_intelligence(fixture);
-        let expected = Provider {
-            id: ProviderId::IO_INTELLIGENCE,
-            provider_type: Default::default(),
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::from_str("https://api.intelligence.io.solutions/api/v1/chat/completions")
-                .unwrap(),
-            credential: Some(AuthCredential {
-                id: ProviderId::IO_INTELLIGENCE,
-                auth_details: AuthDetails::ApiKey(ApiKey::from(fixture.to_string())),
-                url_params: HashMap::new(),
-            }),
-            auth_methods: vec![crate::AuthMethod::ApiKey],
-            url_params: vec![],
-            models: Some(ModelSource::Url(
-                Url::from_str("https://api.intelligence.io.solutions/api/v1/models").unwrap(),
-            )),
-            custom_headers: None,
-        };
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_xai() {
-        let fixture = "test_key";
-        let actual = xai(fixture);
-        let expected = Provider {
-            id: ProviderId::XAI,
-            provider_type: Default::default(),
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::from_str("https://api.x.ai/v1/chat/completions").unwrap(),
-            credential: Some(AuthCredential {
-                id: ProviderId::XAI,
-                auth_details: AuthDetails::ApiKey(ApiKey::from(fixture.to_string())),
-                url_params: HashMap::new(),
-            }),
-            auth_methods: vec![crate::AuthMethod::ApiKey],
-            url_params: vec![],
-            models: Some(ModelSource::Url(
-                Url::from_str("https://api.x.ai/v1/models").unwrap(),
-            )),
-            custom_headers: None,
-        };
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_is_xai_with_direct_comparison() {
-        let fixture_xai = xai("key");
-        assert_eq!(fixture_xai.id, ProviderId::XAI);
-
-        let fixture_other = openai("key");
-        assert_ne!(fixture_other.id, ProviderId::XAI);
-    }
-
-    #[test]
-    fn test_zai_coding_to_chat_url() {
-        let fixture = zai_coding("test_key");
-        let actual = fixture.url.clone();
-        let expected = Url::parse("https://api.z.ai/api/coding/paas/v4/chat/completions").unwrap();
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_zai_coding_to_model_url() {
-        let fixture = zai_coding("test_key");
-        let actual = fixture.models.clone();
-        let expected = Some(ModelSource::Url(
-            Url::parse("https://api.z.ai/api/paas/v4/models").unwrap(),
-        ));
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_regular_zai_to_chat_url() {
-        let fixture = zai("test_key");
-        let actual = fixture.url.clone();
-        let expected = Url::parse("https://api.z.ai/api/paas/v4/chat/completions").unwrap();
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_regular_zai_to_model_url() {
-        let fixture = zai("test_key");
-        let actual = fixture.models.clone();
-        let expected = Some(ModelSource::Url(
-            Url::parse("https://api.z.ai/api/paas/v4/models").unwrap(),
-        ));
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_vertex_ai_global_location() {
-        let fixture = vertex_ai("test_token", "forge-452914", "global");
-        let actual = fixture.url.clone();
-        let expected = Url::parse("https://aiplatform.googleapis.com/v1/projects/forge-452914/locations/global/endpoints/openapi/chat/completions").unwrap();
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_vertex_ai_regular_location() {
-        let fixture = vertex_ai("test_token", "test_project", "us-central1");
-        let actual = fixture.url.clone();
-        let expected = Url::parse("https://us-central1-aiplatform.googleapis.com/v1/projects/test_project/locations/us-central1/endpoints/openapi/chat/completions").unwrap();
-        assert_eq!(actual, expected);
+        assert_eq!(ProviderId::FORGE_SERVICES.to_string(), "ForgeServices");
+        assert_eq!(ProviderId::LLAMA_CPP.to_string(), "LlamaCpp");
+        assert_eq!(ProviderId::VLLM.to_string(), "Vllm");
+        assert_eq!(ProviderId::JAN_AI.to_string(), "JanAi");
+        assert_eq!(ProviderId::OLLAMA.to_string(), "Ollama");
+        assert_eq!(ProviderId::LM_STUDIO.to_string(), "LmStudio");
     }
 
     #[test]
@@ -767,5 +421,61 @@ mod tests {
                 .unwrap(),
         ));
         assert_eq!(actual_model, expected_model);
+    }
+
+    #[test]
+    fn test_openai_from_str() {
+        let actual = ProviderId::from_str("openai").unwrap();
+        let expected = ProviderId::OPENAI;
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_openai_compatible_from_str() {
+        let actual = ProviderId::from_str("openai_compatible").unwrap();
+        let expected = ProviderId::OPENAI_COMPATIBLE;
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_llama_cpp_from_str() {
+        let actual = ProviderId::from_str("llama_cpp").unwrap();
+        let expected = ProviderId::LLAMA_CPP;
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_built_in_providers_contains_expected() {
+        let built_in = ProviderId::built_in_providers();
+        assert!(built_in.contains(&ProviderId::OPENAI));
+        assert!(built_in.contains(&ProviderId::AZURE));
+        assert!(built_in.contains(&ProviderId::OPENAI_COMPATIBLE));
+        assert!(built_in.contains(&ProviderId::OPENAI_RESPONSES_COMPATIBLE));
+        assert!(built_in.contains(&ProviderId::LLAMA_CPP));
+        assert!(built_in.contains(&ProviderId::OLLAMA));
+    }
+
+    #[test]
+    fn test_openai_fixture() {
+        let fixture = "test_key";
+        let actual = openai(fixture);
+        let expected = Provider {
+            id: ProviderId::OPENAI,
+            provider_type: Default::default(),
+            response: Some(ProviderResponse::OpenAI),
+            url: Url::from_str("https://api.openai.com/v1/chat/completions").unwrap(),
+            credential: Some(AuthCredential {
+                id: ProviderId::OPENAI,
+                auth_details: AuthDetails::ApiKey(ApiKey::from(fixture.to_string())),
+                url_params: HashMap::new(),
+            }),
+            auth_methods: vec![crate::AuthMethod::ApiKey],
+            url_params: vec![],
+            models: Some(ModelSource::Url(
+                Url::from_str("https://api.openai.com/v1/models").unwrap(),
+            )),
+            custom_headers: None,
+        };
+        assert_eq!(actual, expected);
     }
 }

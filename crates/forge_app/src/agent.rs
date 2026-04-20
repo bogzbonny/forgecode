@@ -195,7 +195,7 @@ mod tests {
     fn fixture_agent() -> Agent {
         Agent::new(
             AgentId::new("test"),
-            ProviderId::ANTHROPIC,
+            ProviderId::OPENAI,
             ModelId::new("claude-3-5-sonnet-20241022"),
         )
     }

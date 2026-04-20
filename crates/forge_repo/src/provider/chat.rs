@@ -4,17 +4,13 @@ use forge_app::domain::{
     ChatCompletionMessage, Context, Model, ModelId, ProviderResponse, ResultStream,
 };
 use forge_app::{EnvironmentInfra, HttpInfra};
-use forge_domain::{ChatRepository, Provider, ProviderId};
+use forge_domain::{ChatRepository, Provider};
 use forge_infra::CacacheStorage;
 use tokio::task::AbortHandle;
 use url::Url;
 
-use crate::provider::anthropic::AnthropicResponseRepository;
-use crate::provider::bedrock::BedrockResponseRepository;
-use crate::provider::google::GoogleResponseRepository;
 use crate::provider::openai::OpenAIResponseRepository;
 use crate::provider::openai_responses::OpenAIResponsesResponseRepository;
-use crate::provider::opencode::OpenCodeZenResponseRepository;
 
 /// Repository responsible for routing chat requests to the appropriate provider
 /// implementation based on the provider's response type.
@@ -37,11 +33,6 @@ impl<F: EnvironmentInfra<Config = forge_config::ForgeConfig> + HttpInfra> ForgeC
 
         let openai_repo = OpenAIResponseRepository::new(infra.clone());
         let codex_repo = OpenAIResponsesResponseRepository::new(infra.clone());
-        let anthropic_repo = AnthropicResponseRepository::new(infra.clone());
-        let bedrock_repo =
-            BedrockResponseRepository::new(Arc::new(config.retry.unwrap_or_default()));
-        let google_repo = GoogleResponseRepository::new(infra.clone());
-        let opencode_zen_repo = OpenCodeZenResponseRepository::new(infra.clone());
 
         let model_cache = Arc::new(CacacheStorage::new(
             env.cache_dir().join("model_cache"),
@@ -52,10 +43,6 @@ impl<F: EnvironmentInfra<Config = forge_config::ForgeConfig> + HttpInfra> ForgeC
             router: Arc::new(ProviderRouter {
                 openai_repo,
                 codex_repo,
-                anthropic_repo,
-                bedrock_repo,
-                google_repo,
-                opencode_zen_repo,
             }),
             model_cache,
             bg_refresh: BgRefresh::default(),
@@ -124,10 +111,6 @@ impl<F: EnvironmentInfra<Config = forge_config::ForgeConfig> + HttpInfra + Sync>
 struct ProviderRouter<F> {
     openai_repo: OpenAIResponseRepository<F>,
     codex_repo: OpenAIResponsesResponseRepository<F>,
-    anthropic_repo: AnthropicResponseRepository<F>,
-    bedrock_repo: BedrockResponseRepository,
-    google_repo: GoogleResponseRepository<F>,
-    opencode_zen_repo: OpenCodeZenResponseRepository<F>,
 }
 
 impl<F: HttpInfra + EnvironmentInfra<Config = forge_config::ForgeConfig> + Sync> ProviderRouter<F> {
@@ -138,37 +121,9 @@ impl<F: HttpInfra + EnvironmentInfra<Config = forge_config::ForgeConfig> + Sync>
         provider: Provider<Url>,
     ) -> ResultStream<ChatCompletionMessage, anyhow::Error> {
         match provider.response {
-            Some(ProviderResponse::OpenAI) => {
-                // Check if model is a Codex model
-                if model_id.as_str().contains("gpt-5")
-                    && (provider.id == ProviderId::OPENAI
-                        || provider.id == ProviderId::GITHUB_COPILOT
-                        || provider.id == ProviderId::CODEX)
-                {
-                    self.codex_repo.chat(model_id, context, provider).await
-                } else if provider.id == ProviderId::CODEX {
-                    // All Codex provider models use the Responses API
-                    self.codex_repo.chat(model_id, context, provider).await
-                } else {
-                    self.openai_repo.chat(model_id, context, provider).await
-                }
-            }
+            Some(ProviderResponse::OpenAI) => self.openai_repo.chat(model_id, context, provider).await,
             Some(ProviderResponse::OpenAIResponses) => {
                 self.codex_repo.chat(model_id, context, provider).await
-            }
-            Some(ProviderResponse::Anthropic) => {
-                self.anthropic_repo.chat(model_id, context, provider).await
-            }
-            Some(ProviderResponse::Bedrock) => {
-                self.bedrock_repo.chat(model_id, context, provider).await
-            }
-            Some(ProviderResponse::Google) => {
-                self.google_repo.chat(model_id, context, provider).await
-            }
-            Some(ProviderResponse::OpenCode) => {
-                self.opencode_zen_repo
-                    .chat(model_id, context, provider)
-                    .await
             }
             None => Err(anyhow::anyhow!(
                 "Provider response type not configured for provider: {}",
@@ -181,10 +136,6 @@ impl<F: HttpInfra + EnvironmentInfra<Config = forge_config::ForgeConfig> + Sync>
         match provider.response {
             Some(ProviderResponse::OpenAI) => self.openai_repo.models(provider).await,
             Some(ProviderResponse::OpenAIResponses) => self.codex_repo.models(provider).await,
-            Some(ProviderResponse::Anthropic) => self.anthropic_repo.models(provider).await,
-            Some(ProviderResponse::Bedrock) => self.bedrock_repo.models(provider).await,
-            Some(ProviderResponse::Google) => self.google_repo.models(provider).await,
-            Some(ProviderResponse::OpenCode) => self.opencode_zen_repo.models(provider).await,
             None => Err(anyhow::anyhow!(
                 "Provider response type not configured for provider: {}",
                 provider.id

@@ -142,10 +142,6 @@ impl From<forge_config::ProviderEntry> for ProviderConfig {
             forge_config::ProviderResponseType::OpenAIResponses => {
                 ProviderResponse::OpenAIResponses
             }
-            forge_config::ProviderResponseType::Anthropic => ProviderResponse::Anthropic,
-            forge_config::ProviderResponseType::Bedrock => ProviderResponse::Bedrock,
-            forge_config::ProviderResponseType::Google => ProviderResponse::Google,
-            forge_config::ProviderResponseType::OpenCode => ProviderResponse::OpenCode,
         });
 
         ProviderConfig {
@@ -289,7 +285,6 @@ impl<
         let configs = self.get_merged_configs().await;
 
         let has_openai_url = self.infra.get_env_var("OPENAI_URL").is_some();
-        let has_anthropic_url = self.infra.get_env_var("ANTHROPIC_URL").is_some();
 
         for config in configs {
             // Skip Forge provider and ContextEngine providers - they're not configurable
@@ -306,12 +301,6 @@ impl<
                 || config.id == ProviderId::OPENAI_RESPONSES_COMPATIBLE)
                 && !has_openai_url
             {
-                continue;
-            }
-            if config.id == ProviderId::ANTHROPIC && has_anthropic_url {
-                continue;
-            }
-            if config.id == ProviderId::ANTHROPIC_COMPATIBLE && !has_anthropic_url {
                 continue;
             }
 
@@ -373,30 +362,10 @@ impl<
         config: &ProviderConfig,
     ) -> anyhow::Result<forge_domain::ProviderTemplate> {
         // Get credential from file
-        let mut credential = self
+        let credential = self
             .get_credential(&config.id)
             .await?
             .ok_or_else(|| Error::provider_not_available(config.id.clone()))?;
-
-        // Check if this is a Google ADC credential and refresh it
-        // Google ADC tokens expire quickly, so we refresh them on every load
-        if (credential.id == forge_domain::ProviderId::VERTEX_AI
-            || credential.id == forge_domain::ProviderId::VERTEX_AI_ANTHROPIC)
-            && let forge_domain::AuthDetails::ApiKey(ref api_key) = credential.auth_details
-            && api_key.as_ref() == "google_adc_marker"
-        {
-            // Refresh the Google ADC credential, preserving url_params
-            match self.refresh_google_adc_credential(&credential).await {
-                Ok(refreshed) => {
-                    credential = refreshed;
-                    tracing::info!("Successfully refreshed Google ADC token");
-                }
-                Err(e) => {
-                    tracing::error!("Failed to refresh Google ADC token: {e}");
-                    return Err(e.context("Failed to refresh Google ADC token. Please run 'gcloud auth application-default login' to set up credentials."));
-                }
-            }
-        }
 
         // Handle models - keep as templates
         let models = config.models.as_ref().map(|m| match m {
@@ -431,44 +400,6 @@ impl<
         config: &ProviderConfig,
     ) -> anyhow::Result<forge_domain::ProviderTemplate> {
         Ok(config.into())
-    }
-
-    /// Refreshes a Google ADC credential by fetching a fresh token
-    async fn refresh_google_adc_credential(
-        &self,
-        original_credential: &forge_domain::AuthCredential,
-    ) -> anyhow::Result<forge_domain::AuthCredential> {
-        use google_cloud_auth::credentials::Builder;
-
-        // Vertex AI requires cloud-platform scope
-        const VERTEX_AI_SCOPES: &[&str] = &["https://www.googleapis.com/auth/cloud-platform"];
-
-        // Create credentials with proper scopes using the Builder API
-        let credentials = Builder::default()
-            .with_scopes(VERTEX_AI_SCOPES.iter().map(|s| s.to_string()))
-            .build_access_token_credentials()
-            .map_err(|e| anyhow::anyhow!("Failed to create Google credentials builder: {e}. Please run 'gcloud auth application-default login' to set up credentials."))?;
-
-        // Get fresh token
-        let access_token = credentials.access_token().await.map_err(|e| {
-            anyhow::anyhow!("Failed to fetch Google access token: {e}. Please run 'gcloud auth application-default login' to set up credentials.")
-        })?;
-
-        tracing::debug!(
-            "Fetched Google ADC token (length: {})",
-            access_token.token.len()
-        );
-        tracing::debug!(
-            "Token starts with: {}",
-            access_token.token.chars().take(20).collect::<String>()
-        );
-
-        // Create new credential with fresh token, preserving url_params and provider ID
-        Ok(forge_domain::AuthCredential::new_api_key(
-            original_credential.id.clone(),
-            forge_domain::ApiKey::from(access_token.token),
-        )
-        .url_params(original_credential.url_params.clone()))
     }
 
     async fn provider_from_id(
@@ -583,58 +514,51 @@ mod tests {
 
     use super::*;
 
-    #[test]
+ #[test]
     fn test_load_provider_configs() {
         let configs = get_provider_configs();
         assert!(!configs.is_empty());
 
-        // Test that OpenRouter config is loaded correctly
-        let openrouter_config = configs
+        // Test that OpenAI config is loaded correctly
+        let openai_config = configs
             .iter()
-            .find(|c| c.id == ProviderId::OPEN_ROUTER)
+            .find(|c| c.id == ProviderId::OPENAI)
             .unwrap();
         assert_eq!(
-            openrouter_config.api_key_vars,
-            Some("OPENROUTER_API_KEY".to_string())
+            openai_config.api_key_vars,
+            Some("OPENAI_API_KEY".to_string())
         );
-        assert!(openrouter_config.url_param_vars.is_empty());
+        assert!(openai_config.url_param_vars.is_empty());
         assert_eq!(
-            openrouter_config.response_type,
+            openai_config.response_type,
             Some(ProviderResponse::OpenAI)
         );
         assert_eq!(
-            openrouter_config.url.as_str(),
-            "https://openrouter.ai/api/v1/chat/completions"
+            openai_config.url.as_str(),
+            "https://api.openai.com/v1/chat/completions"
         );
     }
 
     #[test]
-    fn test_vertex_ai_config() {
+    fn test_ollama_config() {
         let configs = get_provider_configs();
         let config = configs
             .iter()
-            .find(|c| c.id == ProviderId::VERTEX_AI)
+            .find(|c| c.id == ProviderId::OLLAMA)
             .unwrap();
-        assert_eq!(config.id, ProviderId::VERTEX_AI);
-        assert_eq!(
-            config.api_key_vars,
-            Some("VERTEX_AI_AUTH_TOKEN".to_string())
-        );
+        assert_eq!(config.id, ProviderId::OLLAMA);
+        assert_eq!(config.api_key_vars, Some("OLLAMA_API_KEY".to_string()));
         assert_eq!(
             config
                 .url_param_vars
                 .iter()
                 .map(|v| v.param_name())
                 .collect::<Vec<_>>(),
-            vec!["PROJECT_ID", "LOCATION"]
+            vec!["OLLAMA_URL", "OLLAMA_PORT"]
         );
-        assert_eq!(config.response_type, Some(ProviderResponse::Google));
+        assert_eq!(config.response_type, Some(ProviderResponse::OpenAI));
         assert!(&config.url.contains("{{"));
         assert!(&config.url.contains("}}"));
-
-        // Verify both auth methods are supported
-        assert!(config.auth_methods.contains(&AuthMethod::ApiKey));
-        assert!(config.auth_methods.contains(&AuthMethod::GoogleAdc));
     }
 
     #[test]
@@ -725,47 +649,7 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_anthropic_compatible_config() {
-        let configs = get_provider_configs();
-        let config = configs
-            .iter()
-            .find(|c| c.id == ProviderId::ANTHROPIC_COMPATIBLE)
-            .unwrap();
-        assert_eq!(config.id, ProviderId::ANTHROPIC_COMPATIBLE);
-        assert_eq!(config.api_key_vars, Some("ANTHROPIC_API_KEY".to_string()));
-        assert_eq!(
-            config
-                .url_param_vars
-                .iter()
-                .map(|v| v.param_name())
-                .collect::<Vec<_>>(),
-            vec!["ANTHROPIC_URL"]
-        );
-        assert_eq!(config.response_type, Some(ProviderResponse::Anthropic));
-        assert!(config.url.contains("{{ANTHROPIC_URL}}"));
-    }
-
-    #[test]
-    fn test_io_intelligence_config() {
-        let configs = get_provider_configs();
-        let config = configs
-            .iter()
-            .find(|c| c.id == ProviderId::IO_INTELLIGENCE)
-            .unwrap();
-        assert_eq!(config.id, ProviderId::IO_INTELLIGENCE);
-        assert_eq!(
-            config.api_key_vars,
-            Some("IO_INTELLIGENCE_API_KEY".to_string())
-        );
-        assert!(config.url_param_vars.is_empty());
-        assert_eq!(config.response_type, Some(ProviderResponse::OpenAI));
-        assert_eq!(
-            config.url.as_str(),
-            "https://api.intelligence.io.solutions/api/v1/chat/completions"
-        );
-    }
-}
+ }
 
 #[cfg(test)]
 mod env_tests {
@@ -979,14 +863,10 @@ mod env_tests {
         }
     }
 
-    #[tokio::test]
+  #[tokio::test]
     async fn test_migration_from_env_to_file() {
         let mut env_vars = HashMap::new();
         env_vars.insert("OPENAI_API_KEY".to_string(), "test-openai-key".to_string());
-        env_vars.insert(
-            "ANTHROPIC_API_KEY".to_string(),
-            "test-anthropic-key".to_string(),
-        );
         env_vars.insert(
             "OPENAI_URL".to_string(),
             "https://custom.openai.com/v1".to_string(),
@@ -1002,8 +882,7 @@ mod env_tests {
         let credentials_guard = infra.credentials.lock().await;
         let credentials = credentials_guard.as_ref().unwrap();
 
-        // Should have migrated OpenAICompatible (not OpenAI) and Anthropic (not
-        // AnthropicCompatible)
+        // Should have migrated OpenAICompatible (not OpenAI)
         assert!(
             !credentials.iter().any(|c| c.id == ProviderId::OPENAI),
             "Should NOT create OpenAI credential when OPENAI_URL is set"
@@ -1013,16 +892,6 @@ mod env_tests {
                 .iter()
                 .any(|c| c.id == ProviderId::OPENAI_COMPATIBLE),
             "Should create OpenAICompatible credential when OPENAI_URL is set"
-        );
-        assert!(
-            credentials.iter().any(|c| c.id == ProviderId::ANTHROPIC),
-            "Should create Anthropic credential when ANTHROPIC_URL is NOT set"
-        );
-        assert!(
-            !credentials
-                .iter()
-                .any(|c| c.id == ProviderId::ANTHROPIC_COMPATIBLE),
-            "Should NOT create AnthropicCompatible credential when ANTHROPIC_URL is NOT set"
         );
 
         // Verify OpenAICompatible credential
@@ -1044,16 +913,6 @@ mod env_tests {
                 .map(|v| v.as_str()),
             Some("https://custom.openai.com/v1")
         );
-
-        // Verify Anthropic credential
-        let anthropic_cred = credentials
-            .iter()
-            .find(|c| c.id == ProviderId::ANTHROPIC)
-            .unwrap();
-        match &anthropic_cred.auth_details {
-            AuthDetails::ApiKey(key) => assert_eq!(key.as_str(), "test-anthropic-key"),
-            _ => panic!("Expected API key"),
-        }
     }
 
     #[tokio::test]
@@ -1091,69 +950,7 @@ mod env_tests {
         );
     }
 
-    #[tokio::test]
-    async fn test_migration_both_compatible_urls() {
-        let mut env_vars = HashMap::new();
-        env_vars.insert("OPENAI_API_KEY".to_string(), "test-openai-key".to_string());
-        env_vars.insert(
-            "ANTHROPIC_API_KEY".to_string(),
-            "test-anthropic-key".to_string(),
-        );
-        env_vars.insert(
-            "OPENAI_URL".to_string(),
-            "https://custom.openai.com/v1".to_string(),
-        );
-        env_vars.insert(
-            "ANTHROPIC_URL".to_string(),
-            "https://custom.anthropic.com/v1".to_string(),
-        );
-
-        let infra = Arc::new(MockInfra::new(env_vars));
-        let registry = ForgeProviderRepository::new(infra.clone());
-
-        // Trigger migration
-        registry.migrate_env_to_file().await.unwrap();
-
-        // Verify credentials were written
-        let credentials_guard = infra.credentials.lock().await;
-        let credentials = credentials_guard.as_ref().unwrap();
-
-        // Should have migrated only compatible versions
-        assert!(
-            !credentials.iter().any(|c| c.id == ProviderId::OPENAI),
-            "Should NOT create OpenAI credential when OPENAI_URL is set"
-        );
-        assert!(
-            credentials
-                .iter()
-                .any(|c| c.id == ProviderId::OPENAI_COMPATIBLE),
-            "Should create OpenAICompatible credential when OPENAI_URL is set"
-        );
-        assert!(
-            !credentials.iter().any(|c| c.id == ProviderId::ANTHROPIC),
-            "Should NOT create Anthropic credential when ANTHROPIC_URL is set"
-        );
-        assert!(
-            credentials
-                .iter()
-                .any(|c| c.id == ProviderId::ANTHROPIC_COMPATIBLE),
-            "Should create AnthropicCompatible credential when ANTHROPIC_URL is set"
-        );
-
-        // Verify AnthropicCompatible has URL param
-        let anthropic_compat_cred = credentials
-            .iter()
-            .find(|c| c.id == ProviderId::ANTHROPIC_COMPATIBLE)
-            .unwrap();
-        assert!(!anthropic_compat_cred.url_params.is_empty());
-        let url_params = &anthropic_compat_cred.url_params;
-        assert_eq!(
-            url_params
-                .get(&URLParam::from("ANTHROPIC_URL".to_string()))
-                .map(|v| v.as_str()),
-            Some("https://custom.anthropic.com/v1")
-        );
-    }
+   
 
     #[tokio::test]
     async fn test_create_azure_provider_with_handlebars_urls() {
@@ -1223,11 +1020,10 @@ mod env_tests {
         }
     }
 
-    #[tokio::test]
+   #[tokio::test]
     async fn test_default_provider_urls() {
         let mut env_vars = HashMap::new();
         env_vars.insert("OPENAI_API_KEY".to_string(), "test-key".to_string());
-        env_vars.insert("ANTHROPIC_API_KEY".to_string(), "test-key".to_string());
 
         let infra = Arc::new(MockInfra::new(env_vars));
         let registry = ForgeProviderRepository::new(infra);
@@ -1244,22 +1040,11 @@ mod env_tests {
                 _ => None,
             })
             .unwrap();
-        let anthropic_provider = providers
-            .iter()
-            .find_map(|p| match p {
-                AnyProvider::Template(cp) if cp.id == ProviderId::ANTHROPIC => Some(cp),
-                _ => None,
-            })
-            .unwrap();
 
-        // Regular OpenAI and Anthropic providers return template URLs (not rendered)
+        // Regular OpenAI provider returns template URL (not rendered)
         assert_eq!(
             openai_provider.url.template,
             "https://api.openai.com/v1/chat/completions"
-        );
-        assert_eq!(
-            anthropic_provider.url.template,
-            "https://api.anthropic.com/v1/messages"
         );
     }
 
@@ -1486,9 +1271,9 @@ mod env_tests {
         );
 
         // Verify other embedded configs still exist
-        let openrouter_config = merged_configs
+        let ollama_config = merged_configs
             .iter()
-            .find(|c| c.id == ProviderId::OPEN_ROUTER);
-        assert!(openrouter_config.is_some());
+            .find(|c| c.id == ProviderId::OLLAMA);
+        assert!(ollama_config.is_some());
     }
 }

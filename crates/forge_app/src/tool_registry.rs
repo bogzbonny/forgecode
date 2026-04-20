@@ -438,8 +438,8 @@ mod tests {
         // only allow read and search tools for this agent
         Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("read"), ToolName::new("fs_search")])
     }
@@ -468,8 +468,8 @@ mod tests {
     fn test_validate_tool_call_with_glob_pattern_wildcard() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("mcp_*"), ToolName::new("read")]);
 
@@ -482,8 +482,8 @@ mod tests {
     fn test_validate_tool_call_with_glob_pattern_multiple_tools() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("mcp_*"), ToolName::new("read")]);
 
@@ -502,8 +502,8 @@ mod tests {
     fn test_validate_tool_call_with_glob_pattern_no_match() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("mcp_*"), ToolName::new("read")]);
 
@@ -522,8 +522,8 @@ mod tests {
     fn test_validate_tool_call_with_glob_pattern_question_mark() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("read?"), ToolName::new("write")]);
 
@@ -542,8 +542,8 @@ mod tests {
     fn test_validate_tool_call_with_glob_pattern_character_class() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("tool_[abc]"), ToolName::new("write")]);
 
@@ -566,8 +566,8 @@ mod tests {
     fn test_validate_tool_call_with_glob_pattern_double_wildcard() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("**"), ToolName::new("read")]);
 
@@ -584,8 +584,8 @@ mod tests {
     fn test_validate_tool_call_exact_match_with_special_chars() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("tool_[special]"), ToolName::new("read")]);
 
@@ -602,8 +602,8 @@ mod tests {
     fn test_validate_tool_call_backward_compatibility_exact_match() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![
             ToolName::new("read"),
@@ -626,8 +626,8 @@ mod tests {
     fn test_validate_tool_call_empty_tools_list() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         );
 
         let actual = ToolRegistry::<()>::validate_tool_call(&fixture, &ToolName::new("read"));
@@ -639,8 +639,8 @@ mod tests {
     fn test_validate_tool_call_glob_with_prefix_suffix() {
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("mcp_*_tool")]);
 
@@ -659,8 +659,8 @@ mod tests {
         // lowercase versions
         let fixture = Agent::new(
             AgentId::new("test_agent"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .tools(vec![ToolName::new("read"), ToolName::new("write")]);
 
@@ -719,8 +719,8 @@ fn create_test_agents() -> Vec<forge_domain::Agent> {
     vec![
         Agent::new(
             AgentId::new("sage"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .id(AgentId::new("sage"))
         .title("Research Agent")
@@ -733,8 +733,8 @@ fn create_test_agents() -> Vec<forge_domain::Agent> {
         ]),
         Agent::new(
             AgentId::new("debug"),
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3-5-sonnet-20241022"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4-0125-preview"),
         )
         .id(AgentId::new("debug"))
         .title("Debug Agent")

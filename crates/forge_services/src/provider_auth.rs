@@ -82,29 +82,17 @@ where
         _timeout: Duration,
     ) -> anyhow::Result<()> {
         // Extract auth method from context response
-        // For ApiKey responses, we need to check if it's Google ADC or regular API key
+   // For ApiKey responses, we need to check if it's Google ADC or regular API key
         let auth_method = match &auth_context_response {
-            AuthContextResponse::ApiKey(response) => {
-                // Check if provider supports Google ADC and if it's the Google ADC marker
-                let is_vertex_provider = provider_id == forge_domain::ProviderId::VERTEX_AI
-                    || provider_id == forge_domain::ProviderId::VERTEX_AI_ANTHROPIC;
-                if is_vertex_provider && response.response.api_key.as_ref() == "google_adc_marker" {
-                    // Vertex AI uses Google ADC
-                    forge_domain::AuthMethod::google_adc()
-                } else {
-                    // Regular API key
-                    forge_domain::AuthMethod::ApiKey
-                }
+  AuthContextResponse::ApiKey(_response) => {
+                // Regular API key
+                forge_domain::AuthMethod::ApiKey
             }
             AuthContextResponse::Code(ctx) => {
                 AuthMethod::OAuthCode(ctx.request.oauth_config.clone())
             }
             AuthContextResponse::DeviceCode(ctx) => {
-                if provider_id == forge_domain::ProviderId::CODEX {
-                    AuthMethod::CodexDevice(ctx.request.oauth_config.clone())
-                } else {
-                    AuthMethod::OAuthDevice(ctx.request.oauth_config.clone())
-                }
+                AuthMethod::OAuthDevice(ctx.request.oauth_config.clone())
             }
         };
 

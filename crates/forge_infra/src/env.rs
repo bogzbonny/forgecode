@@ -211,16 +211,16 @@ mod tests {
         apply_config_op(
             &mut fixture,
             ConfigOperation::SetSessionConfig(DomainModelConfig::new(
-                ProviderId::ANTHROPIC,
-                ModelId::new("claude-3-5-sonnet"),
+                ProviderId::OPENAI,
+                ModelId::new("gpt-4-0125-preview"),
             )),
         );
 
         let actual_provider = fixture.session.as_ref().map(|s| s.provider_id.as_str());
         let actual_model = fixture.session.as_ref().map(|s| s.model_id.as_str());
 
-        assert_eq!(actual_provider, Some("anthropic"));
-        assert_eq!(actual_model, Some("claude-3-5-sonnet"));
+        assert_eq!(actual_provider, Some("openai"));
+        assert_eq!(actual_model, Some("gpt-4-0125-preview"));
     }
 
     #[test]
@@ -239,16 +239,16 @@ mod tests {
         apply_config_op(
             &mut fixture,
             ConfigOperation::SetSessionConfig(DomainModelConfig::new(
-                ProviderId::ANTHROPIC,
-                ModelId::new("claude-3-5-sonnet-20241022"),
+                ProviderId::OPENAI,
+                ModelId::new("gpt-4-1106-preview"),
             )),
         );
 
         let actual_provider = fixture.session.as_ref().map(|s| s.provider_id.as_str());
         let actual_model = fixture.session.as_ref().map(|s| s.model_id.as_str());
 
-        assert_eq!(actual_provider, Some("anthropic"));
-        assert_eq!(actual_model, Some("claude-3-5-sonnet-20241022"));
+        assert_eq!(actual_provider, Some("openai"));
+        assert_eq!(actual_model, Some("gpt-4-1106-preview"));
     }
 
     #[test]
@@ -260,15 +260,15 @@ mod tests {
         apply_config_op(
             &mut fixture,
             ConfigOperation::SetSessionConfig(DomainModelConfig::new(
-                ProviderId::ANTHROPIC,
-                ModelId::new("claude-3-5-sonnet-20241022"),
+                ProviderId::OPENAI,
+                ModelId::new("gpt-4-1106-preview"),
             )),
         );
 
         let actual_provider = fixture.session.as_ref().map(|s| s.provider_id.as_str());
         let actual_model = fixture.session.as_ref().map(|s| s.model_id.as_str());
 
-        assert_eq!(actual_provider, Some("anthropic"));
-        assert_eq!(actual_model, Some("claude-3-5-sonnet-20241022"));
+        assert_eq!(actual_provider, Some("openai"));
+        assert_eq!(actual_model, Some("gpt-4-1106-preview"));
     }
 }

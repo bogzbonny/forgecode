@@ -127,27 +127,27 @@ mod tests {
                         custom_headers: None,
                     },
                     Provider {
-                        id: ProviderId::ANTHROPIC,
+                        id: ProviderId::OPENAI,
                         provider_type: Default::default(),
-                        response: Some(ProviderResponse::Anthropic),
-                        url: Url::parse("https://api.anthropic.com").unwrap(),
+                        response: Some(ProviderResponse::OpenAI),
+                        url: Url::parse("https://api.openai.com").unwrap(),
                         auth_methods: vec![forge_domain::AuthMethod::ApiKey],
                         url_params: vec![],
                         credential: Some(forge_domain::AuthCredential {
-                            id: ProviderId::ANTHROPIC,
+                            id: ProviderId::OPENAI,
                             auth_details: forge_domain::AuthDetails::ApiKey(
                                 forge_domain::ApiKey::from("test-key".to_string()),
                             ),
                             url_params: HashMap::new(),
                         }),
                         models: Some(ModelSource::Hardcoded(vec![Model {
-                            id: "claude-3".to_string().into(),
-                            name: Some("Claude 3".to_string()),
+                            id: "gpt-4".to_string().into(),
+                            name: Some("GPT-4".to_string()),
                             description: None,
-                            context_length: Some(200000),
+                            context_length: Some(8192),
                             tools_supported: Some(true),
                             supports_parallel_tool_calls: Some(true),
-                            supports_reasoning: Some(true),
+                            supports_reasoning: Some(false),
                             input_modalities: vec![InputModality::Text],
                         }])),
                         custom_headers: None,
@@ -317,13 +317,13 @@ mod tests {
 
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
-                DomainModelConfig::new(ProviderId::ANTHROPIC, ModelId::new("claude-3")),
+                DomainModelConfig::new(ProviderId::OPENAI, ModelId::new("gpt-4")),
             )])
             .await?;
         let actual = service.get_session_config().await;
         let expected = Some(DomainModelConfig::new(
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4"),
         ));
 
         assert_eq!(actual, expected);
@@ -365,14 +365,14 @@ mod tests {
 
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
-                DomainModelConfig::new(ProviderId::ANTHROPIC, ModelId::new("claude-3")),
+                DomainModelConfig::new(ProviderId::OPENAI, ModelId::new("gpt-4")),
             )])
             .await?;
 
         let actual = service.get_session_config().await;
         let expected = Some(DomainModelConfig::new(
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4"),
         ));
 
         assert_eq!(actual, expected);
@@ -437,12 +437,12 @@ mod tests {
             )])
             .await?;
 
-        // Then switch to Anthropic with its model
+        // Then switch to OpenAI with its model
         service
             .update_config(vec![ConfigOperation::SetSessionConfig(
                 DomainModelConfig::new(
-                    ProviderId::ANTHROPIC,
-                    ModelId::from("claude-3".to_string()),
+                    ProviderId::OPENAI,
+                    ModelId::from("gpt-4".to_string()),
                 ),
             )])
             .await?;
@@ -451,8 +451,8 @@ mod tests {
         // provider/model pair wins
         let actual = service.get_session_config().await;
         let expected = Some(DomainModelConfig::new(
-            ProviderId::ANTHROPIC,
-            ModelId::new("claude-3"),
+            ProviderId::OPENAI,
+            ModelId::new("gpt-4"),
         ));
 
         assert_eq!(actual, expected);

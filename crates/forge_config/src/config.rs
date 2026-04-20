@@ -15,12 +15,10 @@ use crate::{
 /// Wire protocol a provider uses for chat completions.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema, Dummy)]
 pub enum ProviderResponseType {
+    /// OpenAI-compatible chat completions API
     OpenAI,
+    /// OpenAI Responses API
     OpenAIResponses,
-    Anthropic,
-    Bedrock,
-    Google,
-    OpenCode,
 }
 
 /// Category of a provider.
