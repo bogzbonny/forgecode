@@ -14,6 +14,7 @@ mod oauth_callback;
 mod porcelain;
 mod prompt;
 mod sandbox;
+mod snapshots;
 mod state;
 mod stream_renderer;
 mod sync_display;
@@ -29,5 +30,6 @@ mod version;
 
 pub use cli::{Cli, ListCommand, ListCommandGroup, TopLevelCommand};
 pub use sandbox::Sandbox;
+pub use snapshots::SnapshotService;
 pub use title_display::*;
 pub use ui::UI;
