@@ -19,19 +19,15 @@ mod stream_renderer;
 mod sync_display;
 mod title_display;
 mod tools_display;
-pub mod tracker;
+mod tracker;
 mod ui;
 mod utils;
 mod vscode;
 
 mod update;
-
-use std::sync::LazyLock;
+mod version;
 
 pub use cli::{Cli, ListCommand, ListCommandGroup, TopLevelCommand};
 pub use sandbox::Sandbox;
 pub use title_display::*;
 pub use ui::UI;
-
-pub static TRACKER: LazyLock<forge_tracker::Tracker> =
-    LazyLock::new(forge_tracker::Tracker::default);

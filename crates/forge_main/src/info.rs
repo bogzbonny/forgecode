@@ -4,8 +4,9 @@ use std::time::Duration;
 
 use colored::Colorize;
 use forge_api::{Conversation, Environment, ForgeConfig, Metrics, Role, Usage, UserUsage};
-use forge_tracker::VERSION;
 use num_format::{Locale, ToFormattedString};
+
+use crate::version::VERSION;
 
 use crate::display_constants::markers;
 use crate::model::ForgeCommandManager;

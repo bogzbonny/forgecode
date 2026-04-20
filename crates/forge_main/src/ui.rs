@@ -23,7 +23,6 @@ use forge_domain::{
 use forge_fs::ForgeFS;
 use forge_select::ForgeWidget;
 use forge_spinner::SpinnerManager;
-use forge_tracker::ToolCallPayload;
 use forge_walker::Walker;
 use futures::future;
 use strum::IntoEnumIterator;
@@ -49,7 +48,7 @@ use crate::title_display::TitleDisplayExt;
 use crate::tools_display::format_tools;
 use crate::update::on_update;
 use crate::utils::humanize_time;
-use crate::{TRACKER, banner, tracker};
+use crate::banner;
 
 // File-specific constants
 const MISSING_AGENT_TITLE: &str = "<missing agent.title>";
@@ -110,8 +109,6 @@ pub struct UI<A: ConsoleWriter, F: Fn(ForgeConfig) -> A> {
     cli: Cli,
     spinner: SharedSpinner<A>,
     config: ForgeConfig,
-    #[allow(dead_code)] // The guard is kept alive by being held in the struct
-    _guard: forge_tracker::Guard,
 }
 
 impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI<A, F> {
@@ -233,7 +230,6 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
             spinner,
             markdown: MarkdownFormat::new(),
             config,
-            _guard: forge_tracker::init_tracing(env.log_path())?,
         })
     }
 
@@ -314,7 +310,6 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
         // Handle direct prompt or piped input if provided (raw text messages)
         let input = self.cli.prompt.clone().or(self.cli.piped_input.clone());
         if let Some(input) = input {
-            tracker::prompt(input.clone());
             self.spinner.start(None)?;
             tokio::select! {
                 _ = tokio::signal::ctrl_c() => {
@@ -346,11 +341,6 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                             match result {
                                 Ok(exit) => if exit {return Ok(())},
                                 Err(error) => {
-                                    if let Some(conversation_id) = self.state.conversation_id.as_ref()
-                                        && let Some(conversation) = self.api.conversation(conversation_id).await.ok().flatten() {
-                                            TRACKER.set_conversation(conversation).await;
-                                        }
-                                    tracker::error(&error);
                                     tracing::error!(error = ?error);
                                     self.spinner.stop(None)?;
                                     self.writeln_to_stderr(TitleFormat::error(format!("{error:?}")).display().to_string())?;
@@ -362,7 +352,6 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                     self.spinner.stop(None)?;
                 }
                 Err(error) => {
-                    tracker::error(&error);
                     tracing::error!(error = ?error);
                     self.spinner.stop(None)?;
 
@@ -3751,19 +3740,8 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                 // stdout from appearing before the tool name is printed.
                 drop(_guard);
             }
-            ChatResponse::ToolCallEnd(toolcall_result) => {
+            ChatResponse::ToolCallEnd(_toolcall_result) => {
                 // Only track toolcall name in case of success else track the error.
-                let payload = if toolcall_result.is_error() {
-                    let mut r = ToolCallPayload::new(toolcall_result.name.to_string());
-                    if let Some(cause) = toolcall_result.output.as_str() {
-                        r = r.with_cause(cause.to_string());
-                    }
-                    r
-                } else {
-                    ToolCallPayload::new(toolcall_result.name.to_string())
-                };
-                tracker::tool_call(payload);
-
                 self.spinner.start(None)?;
                 if !self.cli.verbose {
                     return Ok(());
@@ -3946,11 +3924,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
         Ok(())
     }
 
-    fn update_model(&mut self, model: Option<ModelId>) {
-        if let Some(ref model) = model {
-            tracker::set_model(model.to_string());
-        }
-    }
+    fn update_model(&mut self, _model: Option<ModelId>) {}
 
     async fn on_custom_event(&mut self, event: Event) -> Result<()> {
         let conversation_id = self.init_conversation().await?;
@@ -3989,14 +3963,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     }
 
     fn trace_user(&self) {
-        let api = self.api.clone();
-        // NOTE: Spawning required so that we don't block the user while querying user
-        // info
-        tokio::spawn(async move {
-            if let Ok(Some(user_info)) = api.user_info().await {
-                tracker::login(user_info.auth_provider_id.into_string());
-            }
-        });
+        // All telemetry has been removed.
     }
 
     /// Handle config command

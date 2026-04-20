@@ -4,8 +4,9 @@ use colored::Colorize;
 use forge_api::API;
 use forge_config::Update;
 use forge_select::ForgeWidget;
-use forge_tracker::VERSION;
 use update_informer::{Check, Version, registry};
+
+use crate::version::VERSION;
 
 /// Runs the official installation script to update Forge, failing silently.
 /// When `auto_update` is true, exits immediately after a successful update
