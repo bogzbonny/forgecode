@@ -1,8 +1,8 @@
-# Claude Tool Description Best Practices
+# Tool Description Best Practices
 
 ## Key Principles
 
-When defining tools for Claude to use, the quality of your tool descriptions dramatically affects performance. Here are the most important best practices extracted from Anthropic's documentation:
+When defining tools for Forge to use, the quality of your tool descriptions dramatically affects performance. Here are the most important best practices extracted from Anthropic's documentation:
 
 ### 1. Provide Extremely Detailed Descriptions
 
@@ -17,7 +17,7 @@ This is by far the most important factor in tool performance. Your descriptions 
 
 ### 2. Use Comprehensive But Concise Descriptions
 
-The more context you can give Claude about your tools, the better it will be at deciding when and how to use them. Aim for 3-4 sentences per tool description, or more if the tool is complex.
+The more context you can give Forge about your tools, the better it will be at deciding when and how to use them. Aim for 3-4 sentences per tool description, or more if the tool is complex.
 
 > **IMPORTANT**: Tool descriptions must never exceed 1024 characters. This is enforced by tests to ensure compatibility with LLM API constraints.
 
@@ -77,18 +77,16 @@ The good description clearly explains:
 - What limitations it has (won't provide other company info)
 - What the parameter means (ticker symbol for publicly traded companies)
 
-The poor description is too brief and leaves Claude with many open questions about the tool's behavior and usage. It doesn't explain what kind of data is returned, what format it's in, when to use it, or what parameters are expected.
+The poor description is too brief and leaves Forge with many open questions about the tool's behavior and usage. It doesn't explain what kind of data is returned, what format it's in, when to use it, or what parameters are expected.
 
 ## Practical Tips
 
 1. **Be specific about data formats** - Explain what format the data will be returned in
 2. **Clarify parameter constraints** - Note any restrictions on parameter values
-3. **Explain tool selection criteria** - Help Claude understand when to pick this tool over others
+3. **Explain tool selection criteria** - Help Forge understand when to pick this tool over others
 4. **Describe error handling** - Note how the tool behaves with invalid inputs
 5. **Include domain-specific details** - Add contextual information related to the tool's domain
 6. **Keep descriptions under 1024 characters** - Ensure compatibility with LLM API constraints
 7. **Register your tool in the registry** - Add your tool to the registry.rs file for availability
 
-Thorough yet concise tool descriptions lead to more accurate tool selection, fewer clarification questions, and better overall performance when using Claude with tools.
-
-Source: [Anthropic Documentation on Tool Use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#example-poor-tool-description)
+Thorough yet concise tool descriptions lead to more accurate tool selection, fewer clarification questions, and better overall performance when using Forge with tools.
