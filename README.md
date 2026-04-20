@@ -892,33 +892,21 @@ FORGE_SEM_SEARCH_TOP_K=20             # Top-k parameter for relevance filtering 
 <details>
 <summary><strong>Logging Configuration</strong></summary>
 
-Configure logging verbosity and output:
+Configure logging verbosity and output. All logs are written locally to a rolling daily file.
 
 ```bash
 # .env
-FORGE_LOG=forge=info                  # Log filter level (default: forge=debug when tracking disabled, forge=info when tracking enabled)
+FORGE_LOG=forge=debug                 # Log filter level (default: forge=debug)
 ```
 
 The `FORGE_LOG` variable controls the logging level for Forge's internal operations using the standard tracing filter syntax. Common values:
 - `forge=error` - Only errors
 - `forge=warn` - Warnings and errors
-- `forge=info` - Informational messages (default when tracking enabled)
-- `forge=debug` - Debug information (default when tracking disabled)
+- `forge=info` - Informational messages
+- `forge=debug` - Debug information (default)
 - `forge=trace` - Detailed tracing
 
-</details>
-
-<details>
-<summary><strong>Tracking Configuration</strong></summary>
-
-Control tracking of user-identifying metadata in telemetry events:
-
-```bash
-# .env
-FORGE_TRACKER=false                   # Disable tracking enrichment metadata (default: true)
-```
-
-The `FORGE_TRACKER` variable controls whether tracking enrichment metadata is included in telemetry events.
+Logs are written to a rolling daily file (`forge.log`) in the application's log directory.
 
 </details>
 
