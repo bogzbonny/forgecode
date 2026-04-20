@@ -86,9 +86,6 @@ pub enum Error {
     #[error("Provider {provider} is not available. Login again to configure it.")]
     ProviderNotAvailable { provider: ProviderId },
 
-    #[error("Failed to create VertexAI provider: {message}")]
-    VertexAiConfiguration { message: String },
-
     // Indexing errors
     #[error("No indexing authentication found")]
     AuthTokenNotFound,
@@ -139,10 +136,6 @@ impl Error {
 
     pub fn provider_not_available(provider: ProviderId) -> Self {
         Self::ProviderNotAvailable { provider }
-    }
-
-    pub fn vertex_ai_config(message: impl Into<String>) -> Self {
-        Self::VertexAiConfiguration { message: message.into() }
     }
 
     pub fn sync_failed(count: usize) -> Self {

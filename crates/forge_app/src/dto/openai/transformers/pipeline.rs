@@ -1,7 +1,6 @@
 use forge_domain::{DefaultTransformation, Provider, ProviderId, Transformer};
 use url::Url;
 
-use super::drop_tool_call::DropToolCalls;
 use super::kimi_k2_reasoning::KimiK2Reasoning;
 use super::make_openai_compat::MakeOpenAiCompat;
 use super::minimax::SetMinimaxParams;
@@ -32,7 +31,6 @@ impl Transformer for ProviderPipeline<'_> {
 
         let or_transformers = DefaultTransformation::<Request>::new()
             .pipe(SetMinimaxParams.when(when_model("minimax")))
-            .pipe(DropToolCalls.when(when_model("mistral")))
             .pipe(SetCache.when(when_model("minimax")))
             .when(move |_| supports_open_router_params(provider));
 

@@ -23,7 +23,7 @@ use crate::provider::IntoDomain;
 ///
 /// Cost-bearing `ping` events from proxy servers (e.g. opencode.ai) are
 /// captured and forwarded as usage data. Other unknown events are silently
-/// ignored, matching the approach used by the Google and Anthropic providers.
+/// ignored.
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
 pub(super) enum ResponsesStreamEvent {

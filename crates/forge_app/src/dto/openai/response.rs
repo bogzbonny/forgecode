@@ -200,32 +200,16 @@ impl From<ReasoningDetail> for forge_domain::ReasoningDetail {
     }
 }
 
-/// Google-specific metadata for Vertex AI thought signatures
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct GoogleMetadata {
-    pub thought_signature: Option<String>,
-}
-
-/// Extra content that may be included by certain providers (e.g., Vertex AI)
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct ExtraContent {
-    pub google: Option<GoogleMetadata>,
-}
+/// Extra content that may be included by certain providers.
+///
+/// Currently reserved for future provider-specific extensions.
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct ExtraContent;
 
 impl ExtraContent {
-    /// Extracts the thought_signature from the extra content if present
+    /// Returns None — no provider currently sends extra content.
     pub fn thought_signature(&self) -> Option<String> {
-        self.google
-            .as_ref()
-            .and_then(|g| g.thought_signature.clone())
-    }
-}
-
-impl From<String> for ExtraContent {
-    fn from(thought_signature: String) -> Self {
-        Self {
-            google: Some(GoogleMetadata { thought_signature: Some(thought_signature) }),
-        }
+        None
     }
 }
 
@@ -661,7 +645,7 @@ mod tests {
 
     #[test]
     fn test_reasoning_response_event() {
-        let event = "{\"id\":\"gen-1751626123-nYRpHzdA0thRXF0LoQi0\",\"provider\":\"Google\",\"model\":\"anthropic/claude-3.7-sonnet:thinking\",\"object\":\"chat.completion.chunk\",\"created\":1751626123,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"I need to check\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"I need to check\"}]},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}";
+        let event = "{\"id\":\"gen-1751626123-nYRpHzdA0thRXF0LoQi0\",\"provider\":\"OpenAI\",\"model\":\"openai/gpt-4o\",\"object\":\"chat.completion.chunk\",\"created\":1751626123,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"I need to check\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"I need to check\"}]},\"finish_reason\":null,\"native_finish_reason\":null,\"logprobs\":null}]}";
         assert!(Fixture::test_response_compatibility(event));
     }
 

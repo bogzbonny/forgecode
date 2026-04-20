@@ -209,22 +209,6 @@ next_result_file
     fi
 ) > "$CURRENT_RF" &
 
-# ─── OpenRouter · anthropic/claude-opus-4-5 — max_tokens ─────────────────────
-# For Anthropic models via OpenRouter, max_tokens maps to budget_tokens.
-# Valid range: integer >= 1024
-# Note: default config injects effort="medium" and enabled=true alongside max_tokens.
-
-next_result_file
-(
-    log_header "OpenRouter · anthropic/claude-opus-4-5 · max_tokens: 4000"
-    OUT="$WORK_DIR/openrouter-anthropic-max-tokens.json"
-    if run_test "$OUT" open_router "anthropic/claude-opus-4-5" FORGE_REASONING__MAX_TOKENS=4000; then
-        assert_field "$OUT" "reasoning.max_tokens" "4000" "openrouter/anthropic"
-    else
-        log_skip "open_router not configured — skipping"
-    fi
-) > "$CURRENT_RF" &
-
 # ─── OpenRouter · moonshotai/kimi-k2 — max_tokens ────────────────────────────
 # Kimi K2 uses token-budget reasoning via OpenRouter (reasoning.max_tokens).
 # Valid range: integer >= 1024
@@ -274,44 +258,6 @@ next_result_file
         assert_field "$OUT" "reasoning.effort" '"high"' "openrouter/minimax-m2"
     else
         log_skip "open_router not configured — skipping"
-    fi
-) > "$CURRENT_RF" &
-
-# ─── Anthropic · claude-opus-4-6 — effort levels ─────────────────────────────
-# Newer models use output_config.effort instead of the thinking object.
-# Valid effort values: low · medium · high · max  (max is opus-4-6 only)
-# Ref: https://platform.claude.com/docs/en/build-with-claude/effort
-
-for effort in low medium high max; do
-    next_result_file
-    (
-        log_header "Anthropic · claude-opus-4-6 · effort: $effort"
-        OUT="$WORK_DIR/anthropic-opus46-effort-$effort.json"
-        if run_test "$OUT" anthropic "claude-opus-4-6" "FORGE_REASONING__EFFORT=$effort"; then
-            assert_field "$OUT" "output_config.effort" "\"$effort\"" "anthropic/opus4.6"
-            assert_field "$OUT" "thinking"             "null"        "anthropic/opus4.6"
-        else
-            log_skip "anthropic not configured — skipping"
-        fi
-    ) > "$CURRENT_RF" &
-done
-
-# ─── Anthropic · claude-3-7-sonnet-20250219 — thinking object ────────────────
-# Older models use the thinking object with budget_tokens instead of effort.
-# budget_tokens must be > 1024 and < max_tokens.
-# Ref: https://platform.claude.com/docs/en/build-with-claude/effort
-
-next_result_file
-(
-    log_header "Anthropic · claude-3-7-sonnet-20250219 · enabled: true + max_tokens: 8000"
-    OUT="$WORK_DIR/anthropic-sonnet37-thinking.json"
-    if run_test "$OUT" anthropic "claude-3-7-sonnet-20250219" \
-            FORGE_REASONING__ENABLED=true FORGE_REASONING__MAX_TOKENS=8000; then
-        assert_field "$OUT" "thinking.type"          '"enabled"' "anthropic/sonnet3.7"
-        assert_field "$OUT" "thinking.budget_tokens" "8000"      "anthropic/sonnet3.7"
-        assert_field "$OUT" "output_config"          "null"      "anthropic/sonnet3.7"
-    else
-        log_skip "anthropic not configured — skipping"
     fi
 ) > "$CURRENT_RF" &
 
@@ -380,7 +326,6 @@ next_result_file
     log_header "Invalid effort · config parse error"
     for entry in \
         "open_router:openai/o4-mini" \
-        "anthropic:claude-opus-4-6" \
         "github_copilot:o4-mini" \
         "codex:gpt-5.1-codex"
     do

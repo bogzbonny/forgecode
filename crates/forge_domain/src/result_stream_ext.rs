@@ -70,7 +70,7 @@ impl ResultStreamExt<anyhow::Error> for crate::BoxStream<ChatCompletionMessage, 
             // Process usage information
             // - For Anthropic-style streaming: input tokens in MessageStart, output tokens
             //   in MessageDelta (values are CUMULATIVE, not incremental)
-            //   ref: https://platform.claude.com/docs/en/build-with-claude/streaming#event-types
+            //   ref: https://docs.anthropic.com/en/docs/build-with-claude/streaming#event-types
             // - For OpenAI-style streaming: all tokens in the final chunk
             // - For GLM-style: may send complete usage in every chunk (need to replace, not
             //   accumulate)
@@ -105,7 +105,7 @@ impl ResultStreamExt<anyhow::Error> for crate::BoxStream<ChatCompletionMessage, 
                     };
                 } else {
                     // Merge partial usage using "max" strategy. This correctly handles
-                    // providers like Anthropic where usage values are CUMULATIVE across
+                    // providers where usage values are CUMULATIVE across
                     // events (message_start has input tokens, message_delta has the
                     // total output tokens). Using max instead of sum prevents
                     // double-counting when message_start includes output_tokens=1.

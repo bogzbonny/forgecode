@@ -571,7 +571,7 @@ async fn test_is_complete_when_stop_with_no_tool_calls() {
 #[tokio::test]
 async fn test_not_complete_when_stop_with_tool_calls() {
     // Test: is_complete = false when finish_reason is Stop BUT there are tool calls
-    // (Gemini models return stop as finish reason with tool calls)
+    // (Some models return stop as finish reason with tool calls)
     let tool_call = ToolCallFull::new("fs_read")
         .arguments(ToolCallArguments::from(json!({"path": "test.txt"})));
     let tool_result = ToolResult::new("fs_read").output(Ok(ToolOutput::text("file content")));

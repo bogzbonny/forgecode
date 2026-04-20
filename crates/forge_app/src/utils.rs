@@ -334,7 +334,7 @@ fn normalize_additional_properties(
 
 /// Normalizes a JSON schema to meet LLM provider requirements
 ///
-/// Many LLM providers (OpenAI, Anthropic) require that all object types in JSON
+/// OpenAI-compatible providers require that all object types in JSON
 /// schemas explicitly set `additionalProperties: false`. This function
 /// recursively processes the schema to add this requirement.
 ///
@@ -493,7 +493,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_normalize_json_schema_anthropic_mode() {
+    fn test_normalize_json_schema_non_strict_mode() {
         let mut schema = json!({
             "type": "object",
             "properties": {

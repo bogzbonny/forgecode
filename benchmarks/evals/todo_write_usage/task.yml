@@ -14,5 +14,5 @@ validations:
 
 sources:
   - value:
-      - model: "anthropic/claude-sonnet-4.5"
+      - model: "openai/gpt-4o"
   - csv: todo_write_usage_tasks.csv

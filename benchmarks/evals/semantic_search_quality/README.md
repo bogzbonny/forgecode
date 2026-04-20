@@ -94,7 +94,7 @@ Required:
 
 Or authenticate using `gcloud auth application-default login`.
 
-The LLM judge uses Vertex AI. It supports Google's Application Default Credentials through the `google-auth-library`. The most common authentication method is to set the path to a JSON credentials file in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
+The LLM judge uses Google Cloud Vertex AI. It supports Google's Application Default Credentials through the `google-auth-library`. The most common authentication method is to set the path to a JSON credentials file in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
 ## Test Cases
 

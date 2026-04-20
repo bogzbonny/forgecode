@@ -64,7 +64,7 @@ run:
       - `crates/forge_app/src/dto/tools_overview.rs` - Include provider tools in overview
 
     - [ ] 7. Create provider tool factory and registration
-      Implement a factory pattern for registering provider tools with the system. This factory will create provider tool definitions for different providers (OpenAI, Anthropic, etc.) and make them available to agents that request them.
+      Implement a factory pattern for registering provider tools with the system. This factory will create provider tool definitions for different providers (OpenAI, custom OpenAI-compatible, etc.) and make them available to agents that request them.
 
       Rationale: Different providers support different provider-executed tools. A factory pattern allows the system to create the appropriate tool definitions based on the provider being used. This is extensible - new providers can be added by implementing their tool factory without modifying core logic.
 
@@ -91,15 +91,15 @@ run:
       - `crates/forge_app/src/dto/tools_overview.rs` - Add provider tools field
       - `crates/forge_app/src/tool_registry.rs` - Update tools_overview method
 
-    - [ ] 10. Implement Anthropic provider tools support
-      Create provider tool definitions for Anthropic's provider-executed tools (e.g., `computer_20241022`, `textEditor_20241022`, `bash_20241022`, `webSearch_20250305`, `codeExecution_20250522`). This demonstrates the extensibility of the provider tool system to multiple providers.
+    - [ ] 10. Implement additional provider tools support
+      Create provider tool definitions for additional providers' provider-executed tools. This demonstrates the extensibility of the provider tool system to multiple providers.
 
-      Rationale: Anthropic offers provider-executed tools similar to OpenAI but with different names and capabilities. Implementing support for Anthropic provider tools validates that the architecture is provider-agnostic and extensible. It follows the same pattern established for OpenAI tools.
+       Rationale: Additional providers offer provider-executed tools similar to OpenAI but with different names and capabilities. Implementing support for additional provider tools validates that the architecture is provider-agnostic and extensible. It follows the same pattern established for OpenAI tools.
 
-      Affected files:
-      - `crates/forge_app/src/dto/anthropic/provider_tools.rs` - New file for Anthropic provider tools
-      - `crates/forge_app/src/dto/anthropic/request.rs` - Update conversion logic
-      - `crates/forge_app/src/provider_tools/factory.rs` - Add Anthropic tool factory
+       Affected files:
+       - `crates/forge_app/src/dto/provider_tools.rs` - New file for provider tools
+       - `crates/forge_app/src/dto/openai/request.rs` - Update conversion logic
+       - `crates/forge_app/src/provider_tools/factory.rs` - Add provider tool factory
 
     - [ ] 11. Add tests for provider tool conversion and execution
       Create comprehensive tests covering provider tool definition, conversion to provider formats, integration with Context to Request conversion, and handling of provider tool results. Tests should verify that provider tools are correctly formatted and that client-executed tools remain unaffected.
@@ -108,7 +108,7 @@ run:
 
       Affected files:
       - `crates/forge_app/src/dto/openai/request.rs` - Add conversion tests
-      - `crates/forge_app/src/dto/anthropic/request.rs` - Add conversion tests
+      - `crates/forge_app/src/dto/openai/request.rs` - Add conversion tests
       - `crates/forge_app/src/tool_registry.rs` - Add execution handling tests
 
     - [ ] 12. Update documentation and examples
@@ -124,7 +124,7 @@ run:
 
     - [ ] Provider tool definitions can be created and marked as provider-executed
     - [ ] Provider tools are correctly converted to OpenAI-specific format (for example, using the type field to specify web search instead of function format)
-    - [ ] Provider tools are correctly converted to Anthropic-specific format
+    - [ ] Provider tools are correctly converted to provider-specific format
     - [ ] Context to Request conversion includes provider tools in the correct format
     - [ ] Tool registry recognizes provider tools and skips local execution
     - [ ] Provider tool results from API responses are correctly parsed and handled
@@ -144,7 +144,7 @@ run:
     2. **Provider tool format incompatibility**
        Risk: Different providers may have incompatible tool formats, making it difficult to create a unified abstraction.
 
-       Mitigation: Use provider-specific conversion modules (e.g., `openai_provider_tools`, `anthropic_provider_tools`) that handle format conversion independently. The common `ToolDefinition` serves as an abstraction, but each provider has its own conversion logic.
+       Mitigation: Use provider-specific conversion modules (e.g., `openai_provider_tools`, `custom_provider_tools`) that handle format conversion independently. The common `ToolDefinition` serves as an abstraction, but each provider has its own conversion logic.
 
     3. **Tool result handling complexity**
        Risk: Provider tool results may have different structures that are difficult to normalize into a common `ToolResult` format.
@@ -169,7 +169,7 @@ run:
        Trade-offs: More explicit and type-safe, but adds complexity. The boolean flag is simpler for the current use case and can be extended to an enum later if needed.
 
     2. **Provider-specific tool registries**
-       Create separate tool registries for each provider (OpenAI, Anthropic, etc.) rather than a unified registry. Each provider would manage its own tools, including provider-executed tools.
+       Create separate tool registries for each provider (OpenAI, custom OpenAI-compatible, etc.) rather than a unified registry. Each provider would manage its own tools, including provider-executed tools.
 
        Trade-offs: Cleaner separation of concerns and easier provider-specific logic, but increases code duplication and makes it harder to share tools across providers.
 
@@ -210,7 +210,7 @@ validations:
 
 sources:
   - value:
-      - model: "anthropic/claude-sonnet-4.5"
+      - model: "openai/gpt-4o"
       - model: "z-ai/glm-4.6:exacto"
       - model: "minimax/minimax-m2.1"
 

@@ -626,7 +626,7 @@ FORGE_API_KEY=<your_forge_api_key>
 
 ```yaml
 # forge.yaml
-model: claude-3.7-sonnet
+model: openai/gpt-4o
 ```
 
 </details>

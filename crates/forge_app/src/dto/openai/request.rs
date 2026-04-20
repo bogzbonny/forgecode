@@ -431,13 +431,12 @@ fn serialize_tool_call_arguments(tool_call: &ToolCallFull) -> String {
 impl From<ToolCallFull> for ToolCall {
     fn from(value: ToolCallFull) -> Self {
         let arguments = serialize_tool_call_arguments(&value);
-        let extra_content = value.thought_signature.map(ExtraContent::from);
 
         Self {
             id: value.call_id,
             r#type: FunctionType,
             function: FunctionCall { arguments, name: Some(value.name) },
-            extra_content,
+            extra_content: None,
         }
     }
 }
@@ -472,7 +471,7 @@ impl From<ContextMessage> for Message {
                 reasoning_text: None,
                 reasoning_opaque: None,
                 reasoning_content: None,
-                extra_content: chat_message.thought_signature.map(ExtraContent::from),
+                extra_content: None,
             },
             ContextMessage::Tool(tool_result) => Message {
                 role: Role::Tool,

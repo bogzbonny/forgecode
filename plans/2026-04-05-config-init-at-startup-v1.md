@@ -154,7 +154,7 @@ The `/new` closure captures `ForgeConfig` at startup. After `update_environment`
 
 - Starting forge with a corrupt `~/.forge.toml` file (e.g., `forge = {invalid`) must print a clear, human-readable error message to stderr and exit with a non-zero code — not silently start with default config.
 - Starting forge with a `FORGE_SERVICES_URL=not-a-url` environment variable must print a clear error and exit rather than panicking.
-- `forge config set model anthropic claude-3-opus` must still work correctly — the model is updated in `~/.forge.toml` and subsequent operations use the new model.
+- `forge config set model openai gpt-4o` must still work correctly — the model is updated in `~/.forge.toml` and subsequent operations use the new model.
 - Starting a new conversation with `/new` after `forge config set ...` must reflect the updated config (not the startup snapshot).
 - `forge env` must still display the current config.
 - All existing tests pass under `cargo insta test --accept`.

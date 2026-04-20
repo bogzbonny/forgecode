@@ -35,7 +35,7 @@ validations:
 
 sources:
   - value:
-      - model: "anthropic/claude-sonnet-4.5"
+      - model: "openai/gpt-4o"
       - model: "z-ai/glm-4.6:exacto"
   - value:
       - task: "clean ~/tailcall"

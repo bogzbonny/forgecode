@@ -13,8 +13,8 @@ use crate::dto::openai::Request;
 ///
 /// # Examples
 /// ```rust,ignore
-/// // Apply transformation only for Claude models
-/// let conditional_transformer = my_transformer.when(when_model("claude"));
+/// // Apply transformation only for models matching a pattern
+/// let conditional_transformer = my_transformer.when(when_model("gpt-4"));
 /// ```
 pub fn when_model(pattern: &str) -> impl Fn(&Request) -> bool {
     let regex = Regex::new(pattern).unwrap_or_else(|_| panic!("Invalid regex pattern: {pattern}"));
@@ -56,30 +56,30 @@ mod tests {
     fn test_when_model_matches() {
         // Fixture
         let transformer = TestTransformer { prefix: "prefix-".to_string() };
-        let request = Request::default().model(ModelId::new("anthropic/claude-3"));
+        let request = Request::default().model(ModelId::new("openai/gpt-4"));
 
         // Apply transformation with condition that should match
-        let condition = when_model("claude");
+        let condition = when_model("gpt-4");
         let mut conditional = transformer.when(condition);
         let actual = conditional.transform(request);
 
         // Expected: model name should be prefixed
-        assert_eq!(actual.model.unwrap().as_str(), "prefix-anthropic/claude-3");
+        assert_eq!(actual.model.unwrap().as_str(), "prefix-openai/gpt-4");
     }
 
     #[test]
     fn test_when_model_no_match() {
         // Fixture
         let transformer = TestTransformer { prefix: "prefix-".to_string() };
-        let request = Request::default().model(ModelId::new("openai/gpt-4"));
+        let request = Request::default().model(ModelId::new("openai/gpt-3.5-turbo"));
 
         // Apply transformation with condition that should not match
-        let condition = when_model("claude");
+        let condition = when_model("gpt-4");
         let mut conditional = transformer.when(condition);
         let actual = conditional.transform(request);
 
         // Expected: model name should remain unchanged
-        assert_eq!(actual.model.unwrap().as_str(), "openai/gpt-4");
+        assert_eq!(actual.model.unwrap().as_str(), "openai/gpt-3.5-turbo");
     }
 
     #[test]
@@ -89,7 +89,7 @@ mod tests {
         let request = Request::default(); // No model set
 
         // Apply transformation with when_model
-        let condition = when_model("claude");
+        let condition = when_model("gpt-4");
         let mut conditional = transformer.when(condition);
         let actual = conditional.transform(request);
 
@@ -110,15 +110,15 @@ mod tests {
         let transformer = TestTransformer { prefix: "prefix-".to_string() };
 
         // Test with complex regex pattern
-        let request = Request::default().model(ModelId::new("anthropic/claude-3-sonnet"));
-        let condition = when_model("claude-[0-9]+-sonnet");
+        let request = Request::default().model(ModelId::new("openai/gpt-4-turbo"));
+        let condition = when_model("gpt-4-[a-z]+");
         let mut conditional = transformer.when(condition);
         let actual = conditional.transform(request);
 
         // Expected: model name should be prefixed
         assert_eq!(
             actual.model.unwrap().as_str(),
-            "prefix-anthropic/claude-3-sonnet"
+            "prefix-openai/gpt-4-turbo"
         );
     }
 
@@ -128,12 +128,12 @@ mod tests {
         let transformer = TestTransformer { prefix: "prefix-".to_string() };
 
         // Test case sensitivity
-        let request = Request::default().model(ModelId::new("anthropic/Claude-3"));
-        let condition = when_model("claude"); // lowercase
+        let request = Request::default().model(ModelId::new("openai/GPT-4"));
+        let condition = when_model("gpt-4"); // lowercase
         let mut conditional = transformer.when(condition);
         let actual = conditional.transform(request);
 
         // Expected: model name should remain unchanged (case mismatch)
-        assert_eq!(actual.model.unwrap().as_str(), "anthropic/Claude-3");
+        assert_eq!(actual.model.unwrap().as_str(), "openai/GPT-4");
     }
 }

@@ -17,7 +17,7 @@ validations:
 sources:
   - value:
       # - model: "x-ai/grok-code-fast-1"
-      - model: "anthropic/claude-sonnet-4.6"
+      - model: "openai/gpt-4o"
   - value:
       # # Location questions - "where is"
       # - task: "Where is the code that transforms messages between different AI provider formats?"
@@ -33,7 +33,7 @@ sources:
       # - task: "Find where Git operations like commit, diff, and status are implemented"
 
       # # Understanding questions - "how does"
-      # - task: "How does the system handle differences between OpenAI and Anthropic APIs?"
+      # - task: "How does the system handle differences between OpenAI and OpenAI-compatible APIs?"
       # - task: "How does the tool execution pipeline process and validate tool calls?"
       # - task: "How are streaming responses from LLMs processed?"
 
