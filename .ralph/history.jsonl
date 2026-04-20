@@ -1,0 +1,2 @@
+{"ts":"2026-04-20T08:15:20.184111Z","type":{"kind":"loop_started","prompt":"pick the smallest sub-crate and refactor it into forge_main.\n"}}
+{"ts":"2026-04-20T08:17:30.160641Z","type":{"kind":"loop_started","prompt":"pick the smallest sub-crate and refactor it into forge_main, then end current\nralph loop. Task is fully complete only once all sub-crates are refactored into\nforge_main.\n"}}
