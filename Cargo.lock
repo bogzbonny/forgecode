@@ -1797,7 +1797,6 @@ dependencies = [
  "forge_fs",
  "forge_select",
  "forge_services",
- "forge_snaps",
  "forge_walker",
  "futures",
  "glob",
@@ -1936,7 +1935,6 @@ dependencies = [
  "forge_fs",
  "forge_infra",
  "forge_json_repair",
- "forge_snaps",
  "forge_template",
  "forge_test_kit",
  "futures",
@@ -2001,7 +1999,6 @@ dependencies = [
  "forge_config",
  "forge_domain",
  "forge_fs",
- "forge_snaps",
  "forge_stream",
  "forge_test_kit",
  "futures",
@@ -2036,21 +2033,6 @@ dependencies = [
  "tonic",
  "tracing",
  "url",
- "uuid",
-]
-
-[[package]]
-name = "forge_snaps"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "fnv_rs",
- "forge_domain",
- "forge_fs",
- "serde",
- "tempfile",
- "tokio",
  "uuid",
 ]
 
