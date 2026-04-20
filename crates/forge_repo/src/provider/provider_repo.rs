@@ -561,46 +561,7 @@ mod tests {
         assert!(&config.url.contains("}}"));
     }
 
-    #[test]
-    fn test_azure_config() {
-        let configs = get_provider_configs();
-        let config = configs.iter().find(|c| c.id == ProviderId::AZURE).unwrap();
-        assert_eq!(config.id, ProviderId::AZURE);
-        assert_eq!(config.api_key_vars, Some("AZURE_API_KEY".to_string()));
-        assert_eq!(
-            config
-                .url_param_vars
-                .iter()
-                .map(|v| v.param_name())
-                .collect::<Vec<_>>(),
-            vec![
-                "AZURE_RESOURCE_NAME",
-                "AZURE_DEPLOYMENT_NAME",
-                "AZURE_API_VERSION"
-            ]
-        );
-        assert_eq!(config.response_type, Some(ProviderResponse::OpenAI));
-
-        // Check URL (now contains full chat completion URL)
-        let url = &config.url;
-        assert!(url.contains("{{"));
-        assert!(url.contains("}}"));
-        assert!(url.contains("openai.azure.com"));
-        assert!(url.contains("api-version"));
-        assert!(url.contains("deployments"));
-        assert!(url.contains("chat/completions"));
-
-        // Check models exists and contains expected elements
-        match config.models.as_ref().unwrap() {
-            Models::Url(model_url) => {
-                assert!(model_url.contains("api-version"));
-                assert!(model_url.contains("/models"));
-            }
-            Models::Hardcoded(_) => panic!("Expected Models::Url variant"),
-        }
-    }
-
-    #[test]
+   #[test]
     fn test_openai_compatible_config() {
         let configs = get_provider_configs();
         let config = configs
@@ -952,75 +913,7 @@ mod env_tests {
 
    
 
-    #[tokio::test]
-    async fn test_create_azure_provider_with_handlebars_urls() {
-        let mut env_vars = HashMap::new();
-        env_vars.insert("AZURE_API_KEY".to_string(), "test-key-123".to_string());
-        env_vars.insert(
-            "AZURE_RESOURCE_NAME".to_string(),
-            "my-test-resource".to_string(),
-        );
-        env_vars.insert(
-            "AZURE_DEPLOYMENT_NAME".to_string(),
-            "gpt-4-deployment".to_string(),
-        );
-        env_vars.insert(
-            "AZURE_API_VERSION".to_string(),
-            "2024-02-01-preview".to_string(),
-        );
-
-        let infra = Arc::new(MockInfra::new(env_vars));
-        let registry = ForgeProviderRepository::new(infra);
-
-        // Trigger migration to populate credentials file
-        registry.migrate_env_to_file().await.unwrap();
-
-        // Get Azure config from embedded configs
-        let configs = get_provider_configs();
-        let azure_config = configs
-            .iter()
-            .find(|c| c.id == ProviderId::AZURE)
-            .expect("Azure config should exist");
-
-        // Create provider using the registry's create_provider method
-        let provider = registry
-            .create_provider(azure_config)
-            .await
-            .expect("Should create Azure provider");
-
-        // Verify all URLs are correctly rendered
-        assert_eq!(provider.id, ProviderId::AZURE);
-        assert_eq!(
-            provider
-                .credential
-                .as_ref()
-                .and_then(|c| match &c.auth_details {
-                    forge_domain::AuthDetails::ApiKey(key) => Some(key.to_string()),
-                    _ => None,
-                }),
-            Some("test-key-123".to_string())
-        );
-
-        // Check that URL template is returned (not rendered)
-        let url_template = &provider.url;
-        assert_eq!(
-            url_template.template,
-            "https://{{AZURE_RESOURCE_NAME}}.openai.azure.com/openai/deployments/{{AZURE_DEPLOYMENT_NAME}}/chat/completions?api-version={{AZURE_API_VERSION}}"
-        );
-
-        // Check that model URL template is returned (not rendered)
-        match &provider.models.as_ref().unwrap() {
-            forge_domain::ModelSource::Url(model_template) => {
-                assert_eq!(
-                    model_template.template,
-                    "https://{{AZURE_RESOURCE_NAME}}.openai.azure.com/openai/models?api-version={{AZURE_API_VERSION}}"
-                );
-            }
-            forge_domain::ModelSource::Hardcoded(_) => panic!("Expected ModelSource::Url variant"),
-        }
-    }
-
-   #[tokio::test]
+  #[tokio::test]
     async fn test_default_provider_urls() {
         let mut env_vars = HashMap::new();
         env_vars.insert("OPENAI_API_KEY".to_string(), "test-key".to_string());

@@ -2,7 +2,6 @@ use forge_domain::{DefaultTransformation, Provider, ProviderId, Transformer};
 use url::Url;
 
 use super::drop_tool_call::DropToolCalls;
-use super::github_copilot_reasoning::GitHubCopilotReasoning;
 use super::kimi_k2_reasoning::KimiK2Reasoning;
 use super::make_openai_compat::MakeOpenAiCompat;
 use super::minimax::SetMinimaxParams;
@@ -10,7 +9,6 @@ use super::normalize_tool_schema::{
     EnforceStrictResponseFormatSchema, EnforceStrictToolSchema, NormalizeToolSchema,
 };
 use super::set_cache::SetCache;
-use super::set_reasoning_effort::SetReasoningEffort;
 use super::strip_thought_signature::StripThoughtSignature;
 use super::tool_choice::SetToolChoice;
 use super::trim_tool_call_ids::TrimToolCallIds;
@@ -48,12 +46,6 @@ impl Transformer for ProviderPipeline<'_> {
 
         let open_ai_compat = MakeOpenAiCompat.when(move |_| !supports_open_router_params(provider));
 
-        let set_reasoning_effort =
-            SetReasoningEffort.when(move |_| provider.id == ProviderId::GITHUB_COPILOT);
-
-        let github_copilot_reasoning =
-            GitHubCopilotReasoning.when(move |_| provider.id == ProviderId::GITHUB_COPILOT);
-
         let kimi_k2_reasoning =
             KimiK2Reasoning.when(move |request: &Request| when_model("kimi")(request));
 
@@ -65,9 +57,7 @@ impl Transformer for ProviderPipeline<'_> {
 
         let mut combined = or_transformers
             .pipe(strip_thought_signature)
-            .pipe(set_reasoning_effort)
             .pipe(open_ai_compat)
-            .pipe(github_copilot_reasoning)
             .pipe(kimi_k2_reasoning)
             .pipe(trim_tool_call_ids)
             .pipe(strict_schema)

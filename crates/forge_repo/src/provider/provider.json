@@ -482,42 +482,7 @@
     "response_type": "OpenAIResponses",
     "url": "{{OPENAI_URL}}/responses",
     "models": "{{OPENAI_URL}}/models",
-    "auth_methods": ["api_key"]
-  },
-  {
-    "id": "azure",
-    "api_key_vars": "AZURE_API_KEY",
-    "url_param_vars": ["AZURE_RESOURCE_NAME", "AZURE_DEPLOYMENT_NAME", "AZURE_API_VERSION"],
-    "response_type": "OpenAI",
-    "url": "https://{{AZURE_RESOURCE_NAME}}.openai.azure.com/openai/deployments/{{AZURE_DEPLOYMENT_NAME}}/chat/completions?api-version={{AZURE_API_VERSION}}",
-    "models": "https://{{AZURE_RESOURCE_NAME}}.openai.azure.com/openai/models?api-version={{AZURE_API_VERSION}}",
-    "auth_methods": ["api_key"]
-  },
-  {
-    "id": "github_copilot",
-    "api_key_vars": "GITHUB_COPILOT_API_KEY",
-    "url_param_vars": [],
-    "response_type": "OpenAI",
-    "url": "https://api.githubcopilot.com/chat/completions",
-    "models": "https://api.githubcopilot.com/models",
-    "auth_methods": [
-      {
-        "oauth_device": {
-          "auth_url": "https://github.com/login/device/code",
-          "token_url": "https://github.com/login/oauth/access_token",
-          "client_id": "Iv1.b507a08c87ecfe98",
-          "scopes": ["read:user"],
-          "use_pkce": false,
-          "token_refresh_url": "https://api.github.com/copilot_internal/v2/token",
-          "custom_headers": {
-            "User-Agent": "GitHubCopilotChat/0.26.7",
-            "Accept": "application/json",
-            "editor-version": "vscode/1.99.3",
-            "editor-plugin-version": "copilot-chat/0.26.7"
-          }
-        }
-      }
-    ]
+     "auth_methods": ["api_key"]
   },
   {
     "id": "llama_cpp",
@@ -538,30 +503,12 @@
     "auth_methods": ["api_key"]
   },
   {
-    "id": "jan_ai",
-    "api_key_vars": "JAN_AI_API_KEY",
-    "url_param_vars": ["JAN_AI_URL", "JAN_AI_PORT"],
-    "response_type": "OpenAI",
-    "url": "{{JAN_AI_URL}}:{{JAN_AI_PORT}}/v1/chat/completions",
-    "models": "{{JAN_AI_URL}}:{{JAN_AI_PORT}}/v1/models",
-    "auth_methods": ["api_key"]
-  },
-  {
     "id": "ollama",
     "api_key_vars": "OLLAMA_API_KEY",
     "url_param_vars": ["OLLAMA_URL", "OLLAMA_PORT"],
     "response_type": "OpenAI",
     "url": "{{OLLAMA_URL}}:{{OLLAMA_PORT}}/v1/chat/completions",
     "models": "{{OLLAMA_URL}}:{{OLLAMA_PORT}}/v1/models",
-    "auth_methods": ["api_key"]
-  },
-  {
-    "id": "lm_studio",
-    "api_key_vars": "LM_STUDIO_API_KEY",
-    "url_param_vars": ["LM_STUDIO_URL", "LM_STUDIO_PORT"],
-    "response_type": "OpenAI",
-    "url": "{{LM_STUDIO_URL}}:{{LM_STUDIO_PORT}}/v1/chat/completions",
-    "models": "{{LM_STUDIO_URL}}:{{LM_STUDIO_PORT}}/v1/models",
     "auth_methods": ["api_key"]
   },
   {

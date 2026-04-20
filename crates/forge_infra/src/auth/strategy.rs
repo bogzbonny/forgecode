@@ -985,15 +985,6 @@ impl StrategyFactory for ForgeAuthStrategyFactory {
                 required_params,
             ))),
       forge_domain::AuthMethod::OAuthCode(config) => {
-
-                if provider_id == ProviderId::GITHUB_COPILOT {
-                    return Ok(AnyAuthStrategy::OAuthCodeGithub(OAuthCodeStrategy::new(
-                        GithubHttpProvider,
-                        provider_id,
-                        config,
-                    )));
-                }
-
                 Ok(AnyAuthStrategy::OAuthCodeStandard(OAuthCodeStrategy::new(
                     StandardHttpProvider,
                     provider_id,
@@ -1105,7 +1096,7 @@ mod tests {
 
         let factory = ForgeAuthStrategyFactory;
         let strategy = factory.create_auth_strategy(
-            ProviderId::GITHUB_COPILOT,
+            ProviderId::OPENAI,
             forge_domain::AuthMethod::OAuthDevice(config),
             vec![],
         );

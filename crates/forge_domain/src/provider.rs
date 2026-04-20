@@ -47,17 +47,13 @@ impl ProviderId {
     // Built-in provider constants
     pub const FORGE: ProviderId = ProviderId(Cow::Borrowed("forge"));
     pub const OPENAI: ProviderId = ProviderId(Cow::Borrowed("openai"));
-    pub const AZURE: ProviderId = ProviderId(Cow::Borrowed("azure"));
-    pub const GITHUB_COPILOT: ProviderId = ProviderId(Cow::Borrowed("github_copilot"));
     pub const OPENAI_COMPATIBLE: ProviderId = ProviderId(Cow::Borrowed("openai_compatible"));
     pub const OPENAI_RESPONSES_COMPATIBLE: ProviderId =
         ProviderId(Cow::Borrowed("openai_responses_compatible"));
     pub const FORGE_SERVICES: ProviderId = ProviderId(Cow::Borrowed("forge_services"));
     pub const LLAMA_CPP: ProviderId = ProviderId(Cow::Borrowed("llama_cpp"));
     pub const VLLM: ProviderId = ProviderId(Cow::Borrowed("vllm"));
-    pub const JAN_AI: ProviderId = ProviderId(Cow::Borrowed("jan_ai"));
     pub const OLLAMA: ProviderId = ProviderId(Cow::Borrowed("ollama"));
-    pub const LM_STUDIO: ProviderId = ProviderId(Cow::Borrowed("lm_studio"));
 
     /// Returns all built-in provider IDs
     ///
@@ -66,16 +62,12 @@ impl ProviderId {
         &[
             ProviderId::FORGE,
             ProviderId::OPENAI,
-            ProviderId::AZURE,
-            ProviderId::GITHUB_COPILOT,
             ProviderId::OPENAI_COMPATIBLE,
             ProviderId::OPENAI_RESPONSES_COMPATIBLE,
             ProviderId::FORGE_SERVICES,
             ProviderId::LLAMA_CPP,
             ProviderId::VLLM,
-            ProviderId::JAN_AI,
             ProviderId::OLLAMA,
-            ProviderId::LM_STUDIO,
         ]
     }
 
@@ -92,7 +84,6 @@ impl ProviderId {
             "openai_compatible" => "OpenAICompatible".to_string(),
             "openai_responses_compatible" => "OpenAIResponsesCompatible".to_string(),
             "forge_services" => "ForgeServices".to_string(),
-            "github_copilot" => "GitHub Copilot".to_string(),
             _ => {
                 // For other providers, use UpperCamelCase conversion
                 use convert_case::{Case, Casing};
@@ -116,16 +107,12 @@ impl std::str::FromStr for ProviderId {
         let provider = match s {
             "forge" => ProviderId::FORGE,
             "openai" => ProviderId::OPENAI,
-            "azure" => ProviderId::AZURE,
-            "github_copilot" => ProviderId::GITHUB_COPILOT,
             "openai_compatible" => ProviderId::OPENAI_COMPATIBLE,
             "openai_responses_compatible" => ProviderId::OPENAI_RESPONSES_COMPATIBLE,
             "forge_services" => ProviderId::FORGE_SERVICES,
             "llama_cpp" => ProviderId::LLAMA_CPP,
             "vllm" => ProviderId::VLLM,
-            "jan_ai" => ProviderId::JAN_AI,
             "ollama" => ProviderId::OLLAMA,
-            "lm_studio" => ProviderId::LM_STUDIO,
             // For custom providers, use Cow::Owned to avoid memory leaks
             custom => ProviderId(Cow::Owned(custom.to_string())),
         };
@@ -317,38 +304,6 @@ mod test_helpers {
             )),
         }
     }
-
-    /// Test helper for creating an Azure provider
-    pub(super) fn azure(
-        key: &str,
-        resource_name: &str,
-        deployment_name: &str,
-        api_version: &str,
-    ) -> Provider<Url> {
-        let chat_url = format!(
-            "https://{}.openai.azure.com/openai/deployments/{}/chat/completions?api-version={}",
-            resource_name, deployment_name, api_version
-        );
-        let model_url = format!(
-            "https://{}.openai.azure.com/openai/models?api-version={}",
-            resource_name, api_version
-        );
-
-        Provider {
-            id: ProviderId::AZURE,
-            provider_type: Default::default(),
-            response: Some(ProviderResponse::OpenAI),
-            url: Url::parse(&chat_url).unwrap(),
-            auth_methods: vec![crate::AuthMethod::ApiKey],
-            url_params: ["resource_name", "deployment_name", "api_version"]
-                .iter()
-                .map(|&s| s.to_string().into())
-                .collect(),
-            credential: make_credential(ProviderId::AZURE, key),
-            custom_headers: None,
-            models: Some(ModelSource::Url(Url::parse(&model_url).unwrap())),
-        }
-    }
 }
 
 #[cfg(test)]
@@ -364,8 +319,6 @@ mod tests {
     #[test]
     fn test_provider_id_display_name() {
         assert_eq!(ProviderId::OPENAI.to_string(), "OpenAI");
-        assert_eq!(ProviderId::AZURE.to_string(), "Azure");
-        assert_eq!(ProviderId::GITHUB_COPILOT.to_string(), "GitHub Copilot");
         assert_eq!(
             ProviderId::OPENAI_COMPATIBLE.to_string(),
             "OpenAICompatible"
@@ -377,50 +330,7 @@ mod tests {
         assert_eq!(ProviderId::FORGE_SERVICES.to_string(), "ForgeServices");
         assert_eq!(ProviderId::LLAMA_CPP.to_string(), "LlamaCpp");
         assert_eq!(ProviderId::VLLM.to_string(), "Vllm");
-        assert_eq!(ProviderId::JAN_AI.to_string(), "JanAi");
         assert_eq!(ProviderId::OLLAMA.to_string(), "Ollama");
-        assert_eq!(ProviderId::LM_STUDIO.to_string(), "LmStudio");
-    }
-
-    #[test]
-    fn test_azure_provider() {
-        let fixture = azure("test_key", "my-resource", "gpt-4", "2024-02-15-preview");
-
-        // Check chat completion URL (url field now contains the chat completion URL)
-        let actual_chat = fixture.url.clone();
-        let expected_chat = Url::parse("https://my-resource.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview").unwrap();
-        assert_eq!(actual_chat, expected_chat);
-
-        // Check model URL
-        let actual_model = fixture.models.clone();
-        let expected_model = Some(ModelSource::Url(
-            Url::parse(
-                "https://my-resource.openai.azure.com/openai/models?api-version=2024-02-15-preview",
-            )
-            .unwrap(),
-        ));
-        assert_eq!(actual_model, expected_model);
-
-        assert_eq!(fixture.id, ProviderId::AZURE);
-        assert_eq!(fixture.response, Some(ProviderResponse::OpenAI));
-    }
-
-    #[test]
-    fn test_azure_provider_with_different_params() {
-        let fixture = azure("another_key", "east-us", "gpt-35-turbo", "2023-05-15");
-
-        // Check chat completion URL
-        let actual_chat = fixture.url.clone();
-        let expected_chat = Url::parse("https://east-us.openai.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2023-05-15").unwrap();
-        assert_eq!(actual_chat, expected_chat);
-
-        // Check model URL
-        let actual_model = fixture.models.clone();
-        let expected_model = Some(ModelSource::Url(
-            Url::parse("https://east-us.openai.azure.com/openai/models?api-version=2023-05-15")
-                .unwrap(),
-        ));
-        assert_eq!(actual_model, expected_model);
     }
 
     #[test]
@@ -448,7 +358,6 @@ mod tests {
     fn test_built_in_providers_contains_expected() {
         let built_in = ProviderId::built_in_providers();
         assert!(built_in.contains(&ProviderId::OPENAI));
-        assert!(built_in.contains(&ProviderId::AZURE));
         assert!(built_in.contains(&ProviderId::OPENAI_COMPATIBLE));
         assert!(built_in.contains(&ProviderId::OPENAI_RESPONSES_COMPATIBLE));
         assert!(built_in.contains(&ProviderId::LLAMA_CPP));
