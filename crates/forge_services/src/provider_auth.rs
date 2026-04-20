@@ -74,7 +74,7 @@ where
         _timeout: Duration,
     ) -> anyhow::Result<()> {
         // Extract auth method from context response
-   // For ApiKey responses, we need to check if it's Google ADC or regular API key
+      // For ApiKey responses, we need to check if it's a special API key format or regular API key
         let auth_method = match &auth_context_response {
   AuthContextResponse::ApiKey(_response) => {
                 // Regular API key

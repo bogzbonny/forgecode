@@ -2,7 +2,7 @@
 
 ## Key Principles
 
-When defining tools for Forge to use, the quality of your tool descriptions dramatically affects performance. Here are the most important best practices extracted from Anthropic's documentation:
+When defining tools for Forge to use, the quality of your tool descriptions dramatically affects performance. Here are the most important best practices for writing effective tool descriptions:
 
 ### 1. Provide Extremely Detailed Descriptions
 

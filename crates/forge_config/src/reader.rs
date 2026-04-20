@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
-use config::ConfigBuilder;
 use config::builder::DefaultState;
+use config::ConfigBuilder;
 
-use crate::ForgeConfig;
 use crate::legacy::LegacyConfig;
+use crate::ForgeConfig;
 
 /// Loads all `.env` files found while walking up from the current working
 /// directory to the root, with priority given to closer (lower) directories.
@@ -241,8 +241,8 @@ mod tests {
         // it on top of the embedded defaults. The default values must survive.
         let legacy = ForgeConfig {
             session: Some(ModelConfig {
-                provider_id: "anthropic".to_string(),
-                model_id: "claude-3".to_string(),
+                provider_id: "openai".to_string(),
+                model_id: "gpt-4o".to_string(),
             }),
             ..Default::default()
         };
@@ -259,8 +259,8 @@ mod tests {
         assert_eq!(
             actual.session,
             Some(ModelConfig {
-                provider_id: "anthropic".to_string(),
-                model_id: "claude-3".to_string(),
+                provider_id: "openai".to_string(),
+                model_id: "gpt-4o".to_string(),
             })
         );
 

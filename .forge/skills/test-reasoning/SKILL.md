@@ -1,12 +1,11 @@
 ---
 name: test-reasoning
-description: Validate that reasoning parameters are correctly serialized and sent to provider APIs. Use when the user asks to test reasoning serialization, run reasoning tests, verify reasoning config fields, or check that ReasoningConfig maps correctly to provider-specific JSON (OpenRouter, Anthropic, GitHub Copilot, Codex).
+description: Validate that reasoning parameters are correctly serialized and sent to provider APIs. Use when the user asks to test reasoning serialization, run reasoning tests, verify reasoning config fields, or check that ReasoningConfig maps correctly to provider-specific JSON.
 ---
 
 # Test Reasoning Serialization
 
-Validates that `ReasoningConfig` fields are correctly serialized into provider-specific JSON
-for OpenRouter, Anthropic, GitHub Copilot, and Codex.
+Validates that `ReasoningConfig` fields are correctly serialized into provider-specific JSON for OpenAI-compatible providers.
 
 ## Quick Start
 
@@ -33,23 +32,18 @@ Then inspect `.forge/forge.request.json` for the expected fields.
 
 ## Test Coverage
 
-| Provider         | Model                        | Config fields                                     | Expected JSON field               |
-| ---------------- | ---------------------------- | ------------------------------------------------- | --------------------------------- |
-| `open_router`    | `openai/o4-mini`             | `effort: none\|minimal\|low\|medium\|high\|xhigh` | `reasoning.effort`                |
-| `open_router`    | `openai/o4-mini`             | `max_tokens: 4000`                                | `reasoning.max_tokens`            |
-| `open_router`    | `openai/o4-mini`             | `effort: high` + `exclude: true`                  | `reasoning.effort` + `.exclude`   |
-| `open_router`    | `openai/o4-mini`             | `enabled: true`                                   | `reasoning.enabled`               |
-| `open_router`    | `anthropic/claude-opus-4-5`  | `max_tokens: 4000`                                | `reasoning.max_tokens`            |
-| `open_router`    | `moonshotai/kimi-k2`         | `max_tokens: 4000`                                | `reasoning.max_tokens`            |
-| `open_router`    | `moonshotai/kimi-k2`         | `effort: high`                                    | `reasoning.effort`                |
-| `open_router`    | `minimax/minimax-m2`         | `max_tokens: 4000`                                | `reasoning.max_tokens`            |
-| `open_router`    | `minimax/minimax-m2`         | `effort: high`                                    | `reasoning.effort`                |
-| `anthropic`      | `claude-opus-4-6`            | `effort: low\|medium\|high\|max`                  | `output_config.effort`            |
-| `anthropic`      | `claude-3-7-sonnet-20250219` | `enabled: true` + `max_tokens: 8000`              | `thinking.type` + `budget_tokens` |
-| `github_copilot` | `o4-mini`                    | `effort: none\|minimal\|low\|medium\|high\|xhigh` | `reasoning_effort` (top-level)    |
-| `codex`          | `gpt-5.1-codex`              | `effort: none\|minimal\|low\|medium\|high\|xhigh` | `reasoning.effort` + `.summary`   |
-| `codex`          | `gpt-5.1-codex`              | `effort: medium` + `exclude: true`                | `reasoning.summary = "concise"`   |
-| all providers    | one model each               | `effort: invalid`                                 | non-zero exit, no request written |
+| Provider         | Model              | Config fields                                     | Expected JSON field               |
+| ---------------- | ------------------ | ------------------------------------------------- | --------------------------------- |
+| `forge`          | `openai/o4-mini`   | `effort: none\|minimal\|low\|medium\|high\|xhigh` | `reasoning.effort`                |
+| `forge`          | `openai/o4-mini`   | `max_tokens: 4000`                                | `reasoning.max_tokens`            |
+| `forge`          | `openai/o4-mini`   | `effort: high` + `exclude: true`                  | `reasoning.effort` + `.exclude`   |
+| `forge`          | `openai/o4-mini`   | `enabled: true`                                   | `reasoning.enabled`               |
+| `openai`         | `openai/o4-mini`   | `max_tokens: 4000`                                | `reasoning.max_tokens`            |
+| `openai`         | `openai/o4-mini`   | `effort: high`                                    | `reasoning.effort`                |
+| `llama_cpp`      | `llama-cpp-model`  | `max_tokens: 4000`                                | `reasoning.max_tokens`            |
+| `ollama`         | `ollama-model`     | `effort: high`                                    | `reasoning.effort`                |
+| `vllm`           | `vllm-model`       | `max_tokens: 4000`                                | `reasoning.max_tokens`            |
+| all providers    | one model each     | `effort: invalid`                                 | non-zero exit, no request written |
 
 Tests for unconfigured providers are skipped automatically. Invalid-effort tests run regardless of credentials — the rejection happens at config parse time before any provider interaction.
 
@@ -57,5 +51,3 @@ Tests for unconfigured providers are skipped automatically. Invalid-effort tests
 
 - [OpenAI Reasoning guide](https://developers.openai.com/api/docs/guides/reasoning)
 - [OpenAI Chat Completions API reference](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)
-- [Anthropic Extended Thinking](https://platform.claude.com/docs/en/build-with-claude/effort)
-- [OpenRouter Reasoning Tokens](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens)

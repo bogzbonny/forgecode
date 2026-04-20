@@ -825,14 +825,7 @@ mod tests {
 
     #[test]
     fn test_config_set_with_provider_and_model() {
-        let fixture = Cli::parse_from([
-            "forge",
-            "config",
-            "set",
-            "model",
-            "anthropic",
-            "claude-sonnet-4-20250514",
-        ]);
+        let fixture = Cli::parse_from(["forge", "config", "set", "model", "openai", "gpt-4o"]);
         let actual = match fixture.subcommands {
             Some(TopLevelCommand::Config(config)) => match config.command {
                 ConfigCommand::Set(args) => match args.field {
@@ -845,10 +838,7 @@ mod tests {
             },
             _ => None,
         };
-        let expected = Some((
-            "Anthropic".to_string(),
-            "claude-sonnet-4-20250514".to_string(),
-        ));
+        let expected = Some(("OpenAI".to_string(), "gpt-4o".to_string()));
         assert_eq!(actual, expected);
     }
 
@@ -878,14 +868,7 @@ mod tests {
 
     #[test]
     fn test_config_set_commit_with_provider_and_model() {
-        let fixture = Cli::parse_from([
-            "forge",
-            "config",
-            "set",
-            "commit",
-            "anthropic",
-            "claude-haiku-4-20250514",
-        ]);
+        let fixture = Cli::parse_from(["forge", "config", "set", "commit", "openai", "gpt-4o"]);
         let actual = match fixture.subcommands {
             Some(TopLevelCommand::Config(config)) => match config.command {
                 ConfigCommand::Set(args) => match args.field {
@@ -898,10 +881,7 @@ mod tests {
             },
             _ => None,
         };
-        let expected = Some((
-            "Anthropic".to_string(),
-            "claude-haiku-4-20250514".to_string(),
-        ));
+        let expected = Some(("OpenAI".to_string(), "gpt-4o".to_string()));
         assert_eq!(actual, expected);
     }
 

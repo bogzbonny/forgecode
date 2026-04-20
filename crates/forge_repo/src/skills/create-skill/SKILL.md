@@ -116,7 +116,7 @@ Skills use a three-level loading system to manage context efficiently:
 
 1. **Metadata (name + description)** - Always in context (~100 words)
 2. **SKILL.md body** - When skill triggers (<5k words)
-3. **Bundled resources** - As needed by Claude (Unlimited because scripts can be executed without reading into context window)
+3. **Bundled resources** - As needed by the model (Unlimited because scripts can be executed without reading into context window)
 
 #### Progressive Disclosure Patterns
 

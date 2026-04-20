@@ -50,23 +50,19 @@ impl Default for AgentId {
 #[merge(strategy = merge::option::overwrite_none)]
 pub struct ReasoningConfig {
     /// Controls the effort level of the agent's reasoning
-    /// supported by openrouter and forge provider
     #[serde(skip_serializing_if = "Option::is_none")]
     pub effort: Option<Effort>,
 
     /// Controls how many tokens the model can spend thinking.
-    /// supported by openrouter and forge provider
-    /// should be greater then 1024 but less than overall max_tokens
+    /// Should be greater than 1024 but less than overall max_tokens
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_tokens: Option<usize>,
 
     /// Model thinks deeply, but the reasoning is hidden from you.
-    /// supported by openrouter and forge provider
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exclude: Option<bool>,
 
     /// Enables reasoning at the "medium" effort level with no exclusions.
-    /// supported by openrouter and forge provider
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
 }
@@ -85,9 +81,9 @@ pub enum Effort {
     Medium,
     /// High reasoning effort.
     High,
-    /// Extra-high reasoning effort (OpenAI / OpenRouter).
+    /// Extra-high reasoning effort.
     XHigh,
-    /// Maximum reasoning effort; only available on select Anthropic models.
+    /// Maximum reasoning effort.
     Max,
 }
 

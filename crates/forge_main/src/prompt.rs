@@ -347,7 +347,7 @@ mod tests {
 
     #[test]
     fn test_render_prompt_right_strips_provider_prefix() {
-        // Model ID like "anthropic/claude-3" should show only "claude-3"
+        // Model ID like "openai/gpt-4o" should show only "gpt-4o"
         let usage = Usage {
             prompt_tokens: forge_api::TokenCount::Actual(10),
             completion_tokens: forge_api::TokenCount::Actual(20),
@@ -356,11 +356,11 @@ mod tests {
         };
         let mut prompt = ForgePrompt::default();
         let _ = prompt.usage(usage);
-        let _ = prompt.model(ModelId::new("anthropic/claude-3"));
+        let _ = prompt.model(ModelId::new("openai/gpt-4o"));
 
         let actual = prompt.render_prompt_right();
-        assert!(actual.contains("claude-3"));
-        assert!(!actual.contains("anthropic/claude-3"));
+        assert!(actual.contains("gpt-4o"));
+        assert!(!actual.contains("openai/gpt-4o"));
         assert!(actual.contains("30"));
     }
 

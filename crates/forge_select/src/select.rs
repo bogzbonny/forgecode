@@ -2,7 +2,7 @@ use std::io::IsTerminal;
 
 use anyhow::Result;
 use console::strip_ansi_codes;
-use fzf_wrapped::{Fzf, Layout, run_with_output};
+use fzf_wrapped::{run_with_output, Fzf, Layout};
 
 /// Builder for select prompts with fuzzy search.
 pub struct SelectBuilder<T> {
@@ -335,7 +335,7 @@ mod tests {
     fn test_display_options_are_trimmed() {
         let fixture = [
             "  openai               [empty]",
-            "✓ anthropic            [api.anthropic.com]",
+            "✓ llama_cpp            [localhost:8080]",
         ];
         let actual: Vec<String> = fixture
             .iter()
@@ -343,7 +343,7 @@ mod tests {
             .collect();
         let expected = vec![
             "openai               [empty]".to_string(),
-            "✓ anthropic            [api.anthropic.com]".to_string(),
+            "✓ llama_cpp            [localhost:8080]".to_string(),
         ];
         assert_eq!(actual, expected);
     }

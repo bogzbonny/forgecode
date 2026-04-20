@@ -48,7 +48,7 @@ pub struct ToolCallPart {
     /// require input
     pub arguments_part: String,
 
-    /// Optional thought signature from Gemini3
+    /// Optional thought signature for reasoning models
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thought_signature: Option<String>,
 }

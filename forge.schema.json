@@ -485,12 +485,12 @@
           "const": "high"
         },
         {
-          "description": "Extra-high reasoning effort (OpenAI / OpenRouter).",
+          "description": "Extra-high reasoning effort.",
           "type": "string",
           "const": "xhigh"
         },
         {
-          "description": "Maximum reasoning effort; only available on select models.",
+          "description": "Maximum reasoning effort.",
           "type": "string",
           "const": "max"
         }
@@ -763,7 +763,7 @@
       "type": "object",
       "properties": {
         "effort": {
-          "description": "Controls the effort level of the model's reasoning.\nSupported by openrouter and forge provider.",
+          "description": "Controls the effort level of the model's reasoning.",
           "anyOf": [
             {
               "$ref": "#/$defs/Effort"
@@ -774,21 +774,21 @@
           ]
         },
         "enabled": {
-          "description": "Enables reasoning at the \"medium\" effort level with no exclusions.\nSupported by openrouter and forge provider.",
+          "description": "Enables reasoning at the \"medium\" effort level with no exclusions.",
           "type": [
             "boolean",
             "null"
           ]
         },
         "exclude": {
-          "description": "When true, the model thinks deeply but the reasoning is hidden from the\ncaller. Supported by openrouter and forge provider.",
+          "description": "When true, the model thinks deeply but the reasoning is hidden from the\ncaller.",
           "type": [
             "boolean",
             "null"
           ]
         },
         "max_tokens": {
-          "description": "Controls how many tokens the model can spend thinking.\nShould be greater than 1024 but less than the overall max_tokens.\nSupported by openrouter and forge provider.",
+          "description": "Controls how many tokens the model can spend thinking.\nShould be greater than 1024 but less than the overall max_tokens.",
           "type": [
             "integer",
             "null"

@@ -229,7 +229,7 @@ impl AuthStrategy for OAuthDeviceStrategy {
     }
 }
 
-/// OAuth-with-API-Key Strategy - Hybrid flow (GitHub Copilot pattern)
+/// OAuth-with-API-Key Strategy - Hybrid flow for OAuth providers that also require an API key
 pub struct OAuthWithApiKeyStrategy {
     provider_id: ProviderId,
     oauth_config: OAuthConfig,
@@ -368,7 +368,7 @@ async fn refresh_oauth_credential(
             )
         } else {
             // No refresh token - use the existing long-lived OAuth access token
-            // This is typical for GitHub Copilot where the OAuth token is long-lived
+            // Some OAuth providers issue long-lived tokens
             tracing::debug!("No refresh token available, using existing OAuth access token");
             (
                 tokens.access_token.to_string(),
@@ -376,7 +376,7 @@ async fn refresh_oauth_credential(
             )
         };
 
-    // Exchange for API key if needed (GitHub Copilot pattern)
+    // Exchange for API key if needed
     let (api_key, expires_at) = if with_api_key_exchange {
         let url = config.token_refresh_url.as_ref().ok_or_else(|| {
             AuthError::RefreshFailed("Missing token_refresh_url for API key exchange".to_string())
@@ -425,7 +425,7 @@ async fn poll_for_tokens(
             return Err(AuthError::Timeout(timeout).into());
         }
 
-        // Sleep before polling (GitHub pattern only)
+        // Sleep before polling (some providers require this)
         if github_compatible {
             tokio::time::sleep(interval).await;
         }
@@ -467,7 +467,7 @@ async fn poll_for_tokens(
             .await
             .map_err(|e| AuthError::PollFailed(format!("Failed to read response: {e}")))?;
 
-        // GitHub-compatible: HTTP 200 can contain either success or error
+        // Provider-specific: HTTP 200 can contain either success or error
         if github_compatible && status.is_success() {
             let token_response: serde_json::Value = serde_json::from_str(&body_text)
                 .unwrap_or_else(|_| serde_json::json!({"error": "parse_error"}));
@@ -515,7 +515,7 @@ async fn poll_for_tokens(
     }
 }
 
-/// Exchange OAuth token for API key (GitHub Copilot pattern)
+/// Exchange OAuth token for API key
 async fn exchange_oauth_for_api_key(
     oauth_token: &str,
     api_key_exchange_url: &Url,
@@ -654,7 +654,7 @@ impl StrategyFactory for ForgeAuthStrategyFactory {
                 )))
             }
             forge_domain::AuthMethod::OAuthDevice(config) => {
-                // Check if this is OAuth-with-API-Key flow (GitHub Copilot pattern)
+                // Check if this is OAuth-with-API-Key flow (token_refresh_url present)
                 if config.token_refresh_url.is_some() {
                     Ok(AnyAuthStrategy::OAuthWithApiKey(
                         OAuthWithApiKeyStrategy::new(provider_id, config)?,

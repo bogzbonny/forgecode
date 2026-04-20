@@ -496,8 +496,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_into_full_anthropic_streaming_usage_merge() {
-        // Fixture: Simulate Anthropic streaming pattern where message_start has
+    async fn test_into_full_streaming_usage_merge() {
+        // Fixture: Simulate streaming pattern where message_start has
         // output_tokens=1 (the common case) and message_delta has the cumulative total.
         // This tests that merge (max) is used instead of accumulate (sum) to prevent
         // double-counting.
@@ -560,9 +560,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_into_full_anthropic_streaming_usage_merge_zero_output() {
-        // Fixture: Simulate Anthropic/Vertex AI Anthropic streaming pattern
-        // where message_start has output_tokens=0 (Vertex AI pattern).
+    async fn test_into_full_streaming_usage_merge_zero_output() {
+        // Fixture: Simulate streaming pattern
+        // where message_start has output_tokens=0.
         // MessageStart event has input tokens, MessageDelta has output tokens
         let messages = vec![
             // MessageStart with input token usage

@@ -11,7 +11,7 @@ use crate::{ModelId, ProviderId};
 /// is optional.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 pub struct ModelConfig {
-    /// The provider ID (e.g. `"anthropic"`).
+    /// The provider ID (e.g. `"openai"`).
     pub provider: ProviderId,
 
     /// The model ID to use with this provider.

@@ -169,7 +169,7 @@ Forge is designed for developers who want to enhance their workflow with AI assi
 
 - **Zero configuration** - Just add your API key and you're ready to go
 - **Seamless integration** - Works right in your terminal, where you already work
-- **Multi-provider support** - Use OpenAI, Anthropic, or other LLM providers
+- **Multi-provider support** - Use OpenAI-compatible LLM providers
 - **Secure by design** - Restricted shell mode limits file system access and prevents unintended changes
 - **Open-source** - Transparent, extensible, and community-driven
 
@@ -601,68 +601,6 @@ model: o3-mini-high
 </details>
 
 <details>
-<summary><strong>Anthropic</strong></summary>
-
-```bash
-# .env
-ANTHROPIC_API_KEY=<your_anthropic_api_key>
-```
-
-```yaml
-# forge.yaml
-model: claude-3.7-sonnet
-```
-
-</details>
-
-<details>
-<summary><strong>Google Vertex AI</strong></summary>
-
-**Setup Instructions:**
-
-1. **Install Google Cloud CLI** and authenticate:
-
-   ```bash
-   gcloud auth login
-   gcloud config set project YOUR_PROJECT_ID
-   ```
-
-2. **Get your authentication token**:
-
-   ```bash
-   gcloud auth print-access-token
-   ```
-
-3. **Use the token when logging in via Forge**:
-
-   ```bash
-   forge provider login
-   # Select Google Vertex AI and enter your credentials
-   ```
-
-**Legacy `.env` setup:**
-
-```bash
-# .env
-PROJECT_ID=<your_project_id>
-LOCATION=<your_location>
-VERTEX_AI_AUTH_TOKEN=<your_auth_token>
-```
-
-```yaml
-# forge.yaml
-model: google/gemini-2.5-pro
-```
-
-**Available Models:**
-- Claude models: `claude-sonnet-4@20250514`
-- Gemini models: `gemini-2.5-pro`, `gemini-2.0-flash`
-
-Use the `/model` command in Forge CLI to see all available models.
-
-</details>
-
-<details>
 <summary><strong>OpenAI-Compatible Providers</strong></summary>
 
 ```bash
@@ -674,56 +612,6 @@ OPENAI_URL=<your_provider_url>
 ```yaml
 # forge.yaml
 model: <provider-specific-model>
-```
-
-</details>
-
-<details>
-<summary><strong>Groq</strong></summary>
-
-```bash
-# .env
-OPENAI_API_KEY=<your_groq_api_key>
-OPENAI_URL=https://api.groq.com/openai/v1
-```
-
-```yaml
-# forge.yaml
-model: deepseek-r1-distill-llama-70b
-```
-
-</details>
-
-<details>
-<summary><strong>Amazon Bedrock</strong></summary>
-
-To use Amazon Bedrock models with Forge, you'll need to first set up the [Bedrock Access Gateway](https://github.com/aws-samples/bedrock-access-gateway):
-
-1. **Set up Bedrock Access Gateway**:
-
-   - Follow the deployment steps in the [Bedrock Access Gateway repo](https://github.com/aws-samples/bedrock-access-gateway)
-   - Create your own API key in Secrets Manager
-   - Deploy the CloudFormation stack
-   - Note your API Base URL from the CloudFormation outputs
-
-2. **Configure in Forge**:
-
-   ```bash
-   forge provider login
-   # Select OpenAI-compatible provider and enter your Bedrock Gateway details
-   ```
-
-**Legacy `.env` setup:**
-
-```bash
-# .env
-OPENAI_API_KEY=<your_bedrock_gateway_api_key>
-OPENAI_URL=<your_bedrock_gateway_base_url>
-```
-
-```yaml
-# forge.yaml
-model: anthropic.claude-3-opus
 ```
 
 </details>
@@ -949,7 +837,7 @@ Specify the default AI model to use for all agents in the workflow.
 
 ```yaml
 # forge.yaml
-model: "claude-3.7-sonnet"
+model: "gpt-4o"
 ```
 
 </details>
@@ -1014,7 +902,7 @@ When this limit is reached, Forge will:
 <details>
 <summary><strong>Model Context Protocol (MCP)</strong></summary>
 
-The MCP feature allows AI agents to communicate with external tools and services. This implementation follows Anthropic's [Model Context Protocol](https://docs.anthropic.com/en/docs/claude-code/tutorials#set-up-model-context-protocol-mcp) design.
+The MCP feature allows AI agents to communicate with external tools and services. This implementation follows the [Model Context Protocol](https://modelcontextprotocol.io) specification.
 
 ### MCP Configuration
 

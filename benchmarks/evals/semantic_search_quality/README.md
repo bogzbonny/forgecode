@@ -34,7 +34,7 @@ npm run eval semantic_search_quality
 npm run eval semantic_search_quality -- --parallelism 10
 
 # Run with specific model
-npm run eval semantic_search_quality -- --model "anthropic/claude-sonnet-4.5"
+npm run eval semantic_search_quality -- --model "openai/gpt-4o"
 ```
 
 ## Purpose
@@ -64,7 +64,7 @@ The eval runs various semantic search tasks covering different intents:
 - **Configuration**: Find config files and schemas
 
 ### 2. LLM Judge Evaluation
-After each task, an LLM judge (Gemini 3 Pro) evaluates:
+After each task, an LLM judge evaluates:
 
 #### Query Quality (40 points)
 - **Embedding Query (15pts)**: Domain terms, technical context, behavior description
@@ -94,7 +94,7 @@ Required:
 
 Or authenticate using `gcloud auth application-default login`.
 
-The LLM judge uses Vertex AI to run Gemini 3 Pro. It supports Google's Application Default Credentials through the `google-auth-library`. The most common authentication method is to set the path to a JSON credentials file in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
+The LLM judge uses Vertex AI. It supports Google's Application Default Credentials through the `google-auth-library`. The most common authentication method is to set the path to a JSON credentials file in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
 ## Test Cases
 
@@ -161,7 +161,7 @@ task.yml
 ├── Captures debug output (context.json)
 └── Validates with llm_judge.ts
     ├── Extracts sem_search calls
-    ├── Calls Gemini 3 Pro with structured output
+    ├── Calls LLM judge with structured output
     └── Returns evaluation with scores
 ```
 

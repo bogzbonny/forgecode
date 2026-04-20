@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{EnumString, IntoStaticStr};
 
 use super::{ToolCall, ToolCallFull};
-use crate::TokenCount;
 use crate::reasoning::{Reasoning, ReasoningFull};
+use crate::TokenCount;
 
 /// Labels an assistant message as intermediate commentary or the final answer.
 ///
@@ -406,8 +406,8 @@ mod tests {
     }
 
     #[test]
-    fn test_usage_merge_anthropic_cumulative() {
-        // Fixture: Simulates Anthropic's message_start + message_delta pattern
+    fn test_usage_merge_cumulative() {
+        // Fixture: Simulates message_start + message_delta pattern
         // where output_tokens in message_delta is CUMULATIVE (total), not a delta.
         let fixture_message_start = Usage {
             prompt_tokens: TokenCount::Actual(1000),

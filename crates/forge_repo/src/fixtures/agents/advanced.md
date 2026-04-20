@@ -2,7 +2,7 @@
 id: "test-advanced"
 title: "Advanced Test Agent"
 description: "An advanced test agent with full configuration"
-model: "claude-3-5-sonnet-20241022"
+model: "gpt-4o"
 tool_supported: true
 tools: ["fs_read", "fs_write", "shell"]
 temperature: 0.7

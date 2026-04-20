@@ -9,10 +9,9 @@ use super::normalize_tool_schema::{
     EnforceStrictResponseFormatSchema, EnforceStrictToolSchema, NormalizeToolSchema,
 };
 use super::set_cache::SetCache;
-use super::tool_choice::SetToolChoice;
 use super::trim_tool_call_ids::TrimToolCallIds;
 use super::when_model::when_model;
-use crate::dto::openai::{Request, ToolChoice};
+use crate::dto::openai::Request;
 
 /// Pipeline for transforming requests based on the provider type
 pub struct ProviderPipeline<'a>(&'a Provider<Url>);
@@ -29,13 +28,11 @@ impl Transformer for ProviderPipeline<'_> {
 
     fn transform(&mut self, request: Self::Value) -> Self::Value {
         // Only Minimax requires cache configuration to be set.
-        // ref: https://openrouter.ai/docs/features/prompt-caching
         let provider = self.0;
 
         let or_transformers = DefaultTransformation::<Request>::new()
             .pipe(SetMinimaxParams.when(when_model("minimax")))
             .pipe(DropToolCalls.when(when_model("mistral")))
-            .pipe(SetToolChoice::new(ToolChoice::Auto).when(when_model("gemini")))
             .pipe(SetCache.when(when_model("minimax")))
             .when(move |_| supports_open_router_params(provider));
 

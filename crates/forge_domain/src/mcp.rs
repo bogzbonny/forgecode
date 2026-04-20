@@ -1,5 +1,5 @@
 //!
-//! Follows the design specifications of Claude's [.mcp.json](https://docs.anthropic.com/en/docs/claude-code/tutorials#set-up-model-context-protocol-mcp)
+//! Follows the [Model Context Protocol (MCP)](https://modelcontextprotocol.io) specification
 
 use std::collections::BTreeMap;
 use std::ops::Deref;
@@ -474,8 +474,8 @@ mod tests {
 
         let json = r#"{
             "mcpServers": {
-                "github": {
-                    "url": "https://api.githubcopilot.com/mcp/",
+                "example": {
+                    "url": "https://api.example.com/mcp/",
                     "headers": {
                         "Authorization": "Bearer test_token",
                         "Content-Type": "application/json"
@@ -486,9 +486,9 @@ mod tests {
 
         let actual: McpConfig = serde_json::from_str(json).unwrap();
 
-        match actual.mcp_servers.get(&"github".to_string().into()) {
+        match actual.mcp_servers.get(&"example".to_string().into()) {
             Some(McpServerConfig::Http(server)) => {
-                assert_eq!(server.url, "https://api.githubcopilot.com/mcp/");
+                assert_eq!(server.url, "https://api.example.com/mcp/");
                 assert_eq!(server.headers.len(), 2);
                 assert_eq!(
                     server.headers.get("Authorization"),

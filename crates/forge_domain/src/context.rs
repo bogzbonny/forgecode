@@ -574,7 +574,7 @@ impl Context {
         // reasoning_details are present. When reasoning_details already exists it
         // already contains the text (with its cryptographic signature), so adding
         // another entry from the raw `reasoning` string would produce a duplicate
-        // thinking block with a null signature, which Anthropic rejects.
+        // thinking block with a null signature, which some providers reject.
         let merged_reasoning_details = match (reasoning, reasoning_details) {
             (_, Some(details)) => Some(details),
             (Some(reasoning_text), None) => Some(vec![ReasoningFull {
@@ -1653,12 +1653,12 @@ mod tests {
             .add_message(TextMessage::new(Role::Assistant, "First").model(ModelId::new("gpt-3.5")))
             .add_message(TextMessage::new(Role::User, "Question"))
             .add_message(
-                TextMessage::new(Role::Assistant, "Second").model(ModelId::new("claude-3")),
+                TextMessage::new(Role::Assistant, "Second").model(ModelId::new("gpt-4o-mini")),
             );
         let current_model = ModelId::new("gpt-4");
 
         let actual = fixture.has_model_changed(&current_model);
-        let expected = true; // Last assistant message with model is "claude-3", different from "gpt-4"
+        let expected = true; // Last assistant message with model is "gpt-4o-mini", different from "gpt-4"
 
         assert_eq!(actual, expected);
     }
@@ -1669,7 +1669,7 @@ mod tests {
         // messages
         let fixture = Context::default()
             .add_message(TextMessage::new(Role::Assistant, "Response").model(ModelId::new("gpt-4")))
-            .add_message(TextMessage::new(Role::User, "Question").model(ModelId::new("claude-3")));
+            .add_message(TextMessage::new(Role::User, "Question").model(ModelId::new("gpt-4o-mini")));
         let current_model = ModelId::new("gpt-4");
 
         let actual = fixture.has_model_changed(&current_model);
@@ -1700,25 +1700,25 @@ mod tests {
     /// present, `append_message` must NOT create a duplicate thinking block
     /// with a null signature.
     ///
-    /// The Anthropic API rejects messages where any thinking block carries a
+    /// Some APIs reject messages where any thinking block carries a
     /// null or missing signature, so the stored `reasoning_details` must
     /// contain exactly the structured entries that were passed in — no
     /// extras.
     #[test]
     fn test_append_message_does_not_duplicate_reasoning_when_details_present() {
         // Fixture: a structured reasoning detail with a valid signature, as would
-        // arrive after aggregating an Anthropic streaming response.
+        // arrive after aggregating a streaming response.
         let fixture_details = vec![ReasoningFull {
             text: Some("Let me think about this.".to_string()),
             signature: Some("EpwFvalidSignatureABC123".to_string()),
             type_of: Some("reasoning.text".to_string()),
-            format: Some("anthropic-claude-v1".to_string()),
+            format: Some("reasoning-format-v1".to_string()),
             index: Some(0),
             ..Default::default()
         }];
 
         // Both reasoning (raw string) and reasoning_details (structured) are provided,
-        // mirroring what orch.rs passes after collecting a streamed Anthropic response.
+        // mirroring what orch.rs passes after collecting a streamed response.
         let fixture = Context::default().add_message(ContextMessage::user("Hello", None));
         let actual = fixture.append_message(
             "Answer",

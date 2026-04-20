@@ -86,7 +86,7 @@ mod tests {
             .add_message(ContextMessage::user("User message 1", None))
             .add_message(ContextMessage::user(
                 "User message 2",
-                Some(ModelId::new("claude-3")),
+                Some(ModelId::new("gpt-4o")),
             ))
             .add_message(ContextMessage::user("User message 3", None));
 

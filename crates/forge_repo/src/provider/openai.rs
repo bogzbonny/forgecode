@@ -201,9 +201,7 @@ impl<T: HttpInfra> OpenAIProvider<T> {
 /// Handles providers that use OpenAI's API format including:
 /// - OpenAI
 /// - Azure OpenAI
-/// - OpenRouter
-/// - DeepSeek
-/// - Groq
+/// - Any OpenAI-compatible provider
 pub struct OpenAIResponseRepository<F> {
     infra: Arc<F>,
 }

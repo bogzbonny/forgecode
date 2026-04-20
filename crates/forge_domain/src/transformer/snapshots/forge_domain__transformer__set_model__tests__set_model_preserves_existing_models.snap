@@ -11,7 +11,7 @@ before:
     - text:
         role: User
         content: User message 2
-        model: claude-3
+        model: gpt-4o
     - text:
         role: User
         content: User message 3
@@ -24,7 +24,7 @@ after:
     - text:
         role: User
         content: User message 2
-        model: claude-3
+        model: gpt-4o
     - text:
         role: User
         content: User message 3

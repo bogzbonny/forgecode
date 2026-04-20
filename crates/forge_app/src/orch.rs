@@ -307,8 +307,7 @@ impl<S: AgentService + EnvironmentInfra<Config = forge_config::ForgeConfig>> Orc
                 .handle(&response_event, &mut self.conversation)
                 .await?;
 
-            // Turn is completed, if finish_reason is 'stop'. Gemini models return stop as
-            // finish reason with tool calls.
+            // Turn is completed, if finish_reason is 'stop'.
             is_complete =
                 message.finish_reason == Some(FinishReason::Stop) && message.tool_calls.is_empty();
 
