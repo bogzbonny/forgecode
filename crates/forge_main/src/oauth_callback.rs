@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
-use forge_domain::CodeRequest;
+use crate::domain::CodeRequest;
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 use url::{Host, Url};
 
@@ -339,7 +339,7 @@ mod tests {
     use std::sync::atomic::AtomicBool;
     use std::thread;
 
-    use forge_domain::{OAuthConfig, PkceVerifier, State};
+    use crate::domain::{OAuthConfig, PkceVerifier, State};
     use pretty_assertions::assert_eq;
 
     use super::*;

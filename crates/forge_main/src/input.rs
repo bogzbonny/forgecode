@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use forge_api::Environment;
+use crate::api::Environment;
 
 use crate::editor::{ForgeEditor, ReadResult};
 use crate::model::{AppCommand, ForgeCommandManager};

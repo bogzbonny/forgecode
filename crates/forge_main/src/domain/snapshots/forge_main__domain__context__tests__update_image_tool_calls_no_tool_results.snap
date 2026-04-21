@@ -1,0 +1,14 @@
+---
+source: crates/forge_main/src/domain/context.rs
+expression: actual
+---
+messages:
+  - text:
+      role: System
+      content: System message
+  - text:
+      role: User
+      content: User message
+  - text:
+      role: Assistant
+      content: Assistant message

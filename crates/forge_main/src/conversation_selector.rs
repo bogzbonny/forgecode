@@ -2,9 +2,9 @@ use std::fmt::Display;
 
 use anyhow::Result;
 use chrono::Utc;
-use forge_api::Conversation;
-use forge_domain::ConversationId;
-use forge_select::ForgeWidget;
+use crate::api::Conversation;
+use crate::domain::ConversationId;
+use crate::select::ForgeWidget;
 
 use crate::display_constants::markers;
 use crate::info::Info;
@@ -126,8 +126,8 @@ impl ConversationSelector {
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
-    use forge_api::Conversation;
-    use forge_domain::{ConversationId, MetaData, Metrics};
+    use crate::api::Conversation;
+    use crate::domain::{ConversationId, MetaData, Metrics};
     use pretty_assertions::assert_eq;
 
     use super::*;

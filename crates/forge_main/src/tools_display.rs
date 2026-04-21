@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use convert_case::{Case, Casing};
-use forge_api::{ToolName, ToolsOverview};
+use crate::api::{ToolName, ToolsOverview};
 
 use crate::info::Info;
 

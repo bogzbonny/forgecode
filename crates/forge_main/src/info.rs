@@ -3,7 +3,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use colored::Colorize;
-use forge_api::{Conversation, Environment, ForgeConfig, Metrics, Role, Usage, UserUsage};
+use crate::api::{Conversation, Environment, ForgeConfig, Metrics, Role, Usage, UserUsage};
 use num_format::{Locale, ToFormattedString};
 
 use crate::version::VERSION;
@@ -700,7 +700,7 @@ pub fn format_reset_time(seconds: u64) -> String {
 }
 
 /// Extracts the first line of raw content from a context message.
-fn format_user_message(msg: &forge_api::ContextMessage) -> Option<String> {
+fn format_user_message(msg: &crate::api::ContextMessage) -> Option<String> {
     let content = msg
         .as_value()
         .and_then(|v| v.as_user_prompt())
@@ -759,7 +759,7 @@ impl From<&Conversation> for Info {
 mod tests {
     use std::path::PathBuf;
 
-    use forge_api::{Environment, EventValue};
+    use crate::api::{Environment, EventValue};
     use pretty_assertions::assert_eq;
 
     // Helper to create minimal test environment
@@ -911,8 +911,8 @@ mod tests {
     }
     #[test]
     fn test_metrics_info_display() {
-        use forge_api::Metrics;
-        use forge_domain::{FileOperation, ToolKind};
+        use crate::api::Metrics;
+        use crate::domain::{FileOperation, ToolKind};
 
         let fixture = Metrics::default()
             .started_at(chrono::Utc::now())
@@ -953,8 +953,8 @@ mod tests {
     #[test]
     fn test_conversation_info_display() {
         use chrono::Utc;
-        use forge_api::ConversationId;
-        use forge_domain::{FileOperation, ToolKind};
+        use crate::api::ConversationId;
+        use crate::domain::{FileOperation, ToolKind};
 
         use super::{Conversation, Metrics};
 
@@ -979,7 +979,7 @@ mod tests {
             title: Some("Test Conversation".to_string()),
             context: None,
             metrics,
-            metadata: forge_domain::MetaData::new(Utc::now()),
+            metadata: crate::domain::MetaData::new(Utc::now()),
         };
 
         let actual = super::Info::from(&fixture);
@@ -994,7 +994,7 @@ mod tests {
     #[test]
     fn test_conversation_info_display_untitled() {
         use chrono::Utc;
-        use forge_api::ConversationId;
+        use crate::api::ConversationId;
 
         use super::{Conversation, Metrics};
 
@@ -1006,7 +1006,7 @@ mod tests {
             title: None,
             context: None,
             metrics,
-            metadata: forge_domain::MetaData::new(Utc::now()),
+            metadata: crate::domain::MetaData::new(Utc::now()),
         };
 
         let actual = super::Info::from(&fixture);
@@ -1021,7 +1021,7 @@ mod tests {
     #[test]
     fn test_conversation_info_display_with_task() {
         use chrono::Utc;
-        use forge_api::{Context, ContextMessage, ConversationId, Role};
+        use crate::api::{Context, ContextMessage, ConversationId, Role};
 
         use super::{Conversation, Metrics};
 
@@ -1032,7 +1032,7 @@ mod tests {
         let context = Context::default()
             .add_message(ContextMessage::system("System prompt"))
             .add_message(ContextMessage::Text(
-                forge_domain::TextMessage::new(Role::User, "First user message")
+                crate::domain::TextMessage::new(Role::User, "First user message")
                     .raw_content(EventValue::text("First user message")),
             ))
             .add_message(ContextMessage::assistant(
@@ -1042,7 +1042,7 @@ mod tests {
                 None,
             ))
             .add_message(ContextMessage::Text(
-                forge_domain::TextMessage::new(Role::User, "Create a new feature")
+                crate::domain::TextMessage::new(Role::User, "Create a new feature")
                     .raw_content(EventValue::text("Create a new feature")),
             ));
 
@@ -1051,7 +1051,7 @@ mod tests {
             title: Some("Test Task".to_string()),
             context: Some(context),
             metrics,
-            metadata: forge_domain::MetaData::new(Utc::now()),
+            metadata: crate::domain::MetaData::new(Utc::now()),
         };
 
         let actual = super::Info::from(&fixture);
@@ -1206,8 +1206,8 @@ mod tests {
 
     #[test]
     fn test_metrics_info_filters_zero_changes() {
-        use forge_api::Metrics;
-        use forge_domain::{FileOperation, ToolKind};
+        use crate::api::Metrics;
+        use crate::domain::{FileOperation, ToolKind};
 
         let fixture = Metrics::default()
             .started_at(chrono::Utc::now())
@@ -1248,8 +1248,8 @@ mod tests {
 
     #[test]
     fn test_metrics_info_all_zero_changes_shows_no_changes() {
-        use forge_api::Metrics;
-        use forge_domain::{FileOperation, ToolKind};
+        use crate::api::Metrics;
+        use crate::domain::{FileOperation, ToolKind};
 
         let fixture = Metrics::default()
             .started_at(chrono::Utc::now())

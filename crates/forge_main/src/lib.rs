@@ -1,6 +1,22 @@
+pub mod api;
+pub mod app;
 pub mod banner;
 mod cli;
 mod completer;
+pub mod config;
+pub mod display;
+pub mod domain;
+pub mod embed;
+pub mod forge_ci;
+pub mod forge_fs;
+pub mod forge_json_repair;
+pub mod forge_markdown_stream;
+pub mod forge_stream;
+pub mod forge_template;
+pub mod forge_walker;
+pub mod repo;
+pub mod services;
+pub mod infra;
 mod paste;
 mod conversation_selector;
 mod display_constants;
@@ -13,6 +29,8 @@ mod model;
 mod oauth_callback;
 mod porcelain;
 mod prompt;
+pub mod select;
+pub mod spinner;
 mod sandbox;
 mod snapshots;
 mod state;
@@ -27,6 +45,9 @@ mod vscode;
 
 mod update;
 mod version;
+
+#[cfg(test)]
+mod test_kit;
 
 pub use cli::{Cli, ListCommand, ListCommandGroup, TopLevelCommand};
 pub use sandbox::Sandbox;

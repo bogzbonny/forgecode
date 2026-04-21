@@ -1,4 +1,4 @@
-use forge_domain::SyncProgress;
+use crate::domain::SyncProgress;
 
 /// Extensions for formatting `SyncProgress` events as human-readable strings.
 ///
@@ -79,7 +79,7 @@ fn pluralize(count: usize) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use forge_api::WorkspaceId;
+    use crate::api::WorkspaceId;
     use pretty_assertions::assert_eq;
 
     use super::*;

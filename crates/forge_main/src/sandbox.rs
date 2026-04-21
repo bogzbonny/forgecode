@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use anyhow::{Context, Result, bail};
-use forge_domain::TitleFormat;
+use crate::domain::TitleFormat;
 
 use crate::title_display::TitleDisplayExt;
 

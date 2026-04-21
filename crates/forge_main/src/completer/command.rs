@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use forge_select::ForgeWidget;
+use crate::select::ForgeWidget;
 use reedline::{Completer, Span, Suggestion};
 
 use crate::model::{ForgeCommand, ForgeCommandManager};

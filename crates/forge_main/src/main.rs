@@ -4,9 +4,9 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use forge_api::ForgeAPI;
-use forge_config::ForgeConfig;
-use forge_domain::TitleFormat;
+use forge_main::api::ForgeAPI;
+use forge_main::config::ForgeConfig;
+use forge_main::domain::TitleFormat;
 use forge_main::{Cli, Sandbox, TitleDisplayExt, UI};
 
 /// Enables ENABLE_VIRTUAL_TERMINAL_PROCESSING on the stdout console handle.

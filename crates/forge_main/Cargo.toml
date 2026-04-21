@@ -13,18 +13,9 @@ path = "src/main.rs"
 thiserror = { workspace = true }
 clap.workspace = true
 console.workspace = true
-forge_app.workspace = true
-forge_api.workspace = true
-forge_domain.workspace = true
-forge_config.workspace = true
-forge_walker.workspace = true
-forge_display.workspace = true
 
-forge_spinner.workspace = true
-forge_select.workspace = true
 
 merge.workspace = true
-forge_fs.workspace = true
 tokio.workspace = true
 tokio-stream.workspace = true
 futures.workspace = true
@@ -38,7 +29,7 @@ crossterm = "0.29.0"
 nu-ansi-term.workspace = true
 tracing.workspace = true
 chrono.workspace = true
-serde_json.workspace = true
+serde_json = { workspace = true, features = ["raw_value"] }
 serde.workspace = true
 toml_edit.workspace = true
 strum.workspace = true
@@ -56,17 +47,79 @@ open.workspace = true
 humantime.workspace = true
 num-format.workspace = true
 url.workspace = true
-forge_embed.workspace = true
 include_dir.workspace = true
 indexmap.workspace = true
 async-recursion.workspace = true
 
-forge_markdown_stream.workspace = true
 strip-ansi-escapes.workspace = true
 terminal_size = "0.4"
 rustls.workspace = true
 tempfile.workspace = true
 tiny_http.workspace = true
+
+# Dependencies from integrated crates
+schemars.workspace = true
+regex.workspace = true
+backon.workspace = true
+handlebars.workspace = true
+glob.workspace = true
+sha2.workspace = true
+gh-workflow.workspace = true
+streamdown-parser = "0.1.4"
+streamdown-core = "0.1.4"
+streamdown-ansi = "0.1.4"
+streamdown-render = "0.1.4"
+unicode-width = "0.2"
+terminal-colorsaurus = "1.0.3"
+syntect.workspace = true
+reqwest.workspace = true
+bytes.workspace = true
+reqwest-eventsource.workspace = true
+tonic.workspace = true
+two-face = "0.5.1"
+termimad.workspace = true
+similar.workspace = true
+nom.workspace = true
+base64.workspace = true
+derive-getters = "0.5.0"
+serde_yml.workspace = true
+derive_more.workspace = true
+dashmap.workspace = true
+rmcp.workspace = true
+oauth2 = { version = "5.0", features = ["reqwest"] }
+serde_urlencoded = "0.7.1"
+http.workspace = true
+diesel = { version = "2.3.7", features = ["sqlite", "r2d2", "chrono"] }
+libsqlite3-sys = { version = "0.36.0", features = ["bundled"] }
+diesel_migrations = "2.2.0"
+cacache = { version = "13.1.0", features = ["tokio-runtime"], default-features = false }
+config = { version = "0.15", features = ["toml"] }
+dotenvy.workspace = true
+async-trait.workspace = true
+fzf-wrapped.workspace = true
+rustyline.workspace = true
+indicatif = "0.18.4"
+rand = "0.10.0"
+uuid.workspace = true
+ignore.workspace = true
+serde_json5 = "0.2.1"
+hex.workspace = true
+html-escape = "0.2.13"
+eserde.workspace = true
+fnv_rs.workspace = true
+infer = "0.19.0"
+prost = "0.14.3"
+prost-types = "0.14.3"
+grep-searcher = { workspace = true }
+grep-regex = { workspace = true }
+gray_matter = { workspace = true }
+eventsource-stream = "0.2.3"
+async-openai = { workspace = true }
+async-stream.workspace = true
+fake = { version = "5.1.0", features = ["derive"] }
+tonic-prost = "0.14.5"
+html2md = "0.2.15"
+forge_tool_macros = { path = "./crates/forge_tool_macros" }
 
 [target.'cfg(windows)'.dependencies]
 enable-ansi-support.workspace = true
@@ -75,10 +128,12 @@ windows-sys = { version = "0.61", features = ["Win32_System_Console"] }
 [target.'cfg(not(target_os = "android"))'.dependencies]
 arboard = "3.4"
 
+[build-dependencies]
+tonic-prost-build = "0.14.5"
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt", "time", "test-util"] }
 insta.workspace = true
 pretty_assertions.workspace = true
 serial_test = "3.4"
-fake = { version = "5.1.0", features = ["derive"] }
-forge_domain = { path = "../forge_domain" }
+mockito.workspace = true

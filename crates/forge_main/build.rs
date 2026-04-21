@@ -4,6 +4,12 @@ fn clean_version(version: &str) -> String {
 }
 
 fn main() {
+    // Compile proto files for forge_repo
+    match tonic_prost_build::compile_protos("crates/forge_repo/proto/forge.proto") {
+        Ok(_) => println!("Proto files compiled successfully"),
+        Err(e) => eprintln!("Failed to compile proto files: {}", e),
+    }
+
     // Priority order:
     // 1. APP_VERSION environment variable (for CI/CD builds)
     // 2. Fallback to dev version

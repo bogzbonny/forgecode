@@ -1,0 +1,8 @@
+---
+source: crates/forge_main/src/app/dto/openai/request.rs
+expression: router_message
+---
+{
+  "role": "user",
+  "content": "Hello"
+}

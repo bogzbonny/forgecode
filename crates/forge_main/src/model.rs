@@ -2,8 +2,8 @@ use std::sync::{Arc, Mutex};
 
 use clap::error::ErrorKind;
 use clap::{Parser, Subcommand};
-use forge_api::{AgentInfo, Model, Template};
-use forge_domain::UserCommand;
+use crate::api::{AgentInfo, Model, Template};
+use crate::domain::UserCommand;
 use strum::{EnumProperty, IntoEnumIterator};
 use strum_macros::{EnumIter, EnumProperty};
 
@@ -168,7 +168,7 @@ impl ForgeCommandManager {
     }
 
     /// Registers workflow commands from the API.
-    pub fn register_all(&self, commands: Vec<forge_domain::Command>) {
+    pub fn register_all(&self, commands: Vec<crate::domain::Command>) {
         let mut guard = self.commands.lock().unwrap();
 
         // Remove existing workflow commands (those with ⚙ prefix in description)
@@ -779,10 +779,10 @@ mod tests {
 
     use colored::Colorize;
     use console::strip_ansi_codes;
-    use forge_api::{
+    use crate::api::{
         AnyProvider, InputModality, Model, ModelId, ModelSource, ProviderId, ProviderResponse,
     };
-    use forge_domain::Provider;
+    use crate::domain::Provider;
     use pretty_assertions::assert_eq;
     use url::Url;
 
@@ -1147,10 +1147,10 @@ mod tests {
         // Setup
         let fixture = ForgeCommandManager::default();
         let agents = vec![
-            forge_domain::AgentInfo::default()
+            crate::domain::AgentInfo::default()
                 .id("test-agent")
                 .title("Test Agent".to_string()),
-            forge_domain::AgentInfo::default()
+            crate::domain::AgentInfo::default()
                 .id("another")
                 .title("Another Agent".to_string()),
         ];
@@ -1183,7 +1183,7 @@ mod tests {
         // Setup
         let fixture = ForgeCommandManager::default();
         let agents = vec![
-            forge_domain::AgentInfo::default()
+            crate::domain::AgentInfo::default()
                 .id("test-agent")
                 .title("Test Agent".to_string()),
         ];
@@ -1319,10 +1319,10 @@ mod tests {
     fn test_cli_provider_display_minimal() {
         let fixture = AnyProvider::Url(Provider {
             id: ProviderId::OPENAI_COMPATIBLE,
-            provider_type: forge_domain::ProviderType::Llm,
+            provider_type: crate::domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/v1/chat/completions").unwrap(),
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
+            auth_methods: vec![crate::domain::AuthMethod::ApiKey],
             url_params: vec![],
             credential: None,
             custom_headers: None,
@@ -1340,10 +1340,10 @@ mod tests {
     fn test_cli_provider_display_with_subdomain() {
         let fixture = AnyProvider::Url(Provider {
             id: ProviderId::OPENAI_COMPATIBLE,
-            provider_type: forge_domain::ProviderType::Llm,
+            provider_type: crate::domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("https://api.openai.com/subdomain/v1/chat/completions").unwrap(),
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
+            auth_methods: vec![crate::domain::AuthMethod::ApiKey],
             url_params: vec![],
             credential: None,
             custom_headers: None,
@@ -1361,10 +1361,10 @@ mod tests {
     fn test_cli_provider_display_no_domain() {
         let fixture = AnyProvider::Url(Provider {
             id: ProviderId::FORGE,
-            provider_type: forge_domain::ProviderType::Llm,
+            provider_type: crate::domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("http://localhost:8080/chat/completions").unwrap(),
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
+            auth_methods: vec![crate::domain::AuthMethod::ApiKey],
             url_params: vec![],
             credential: None,
             custom_headers: None,
@@ -1385,7 +1385,7 @@ mod tests {
             provider_type: Default::default(),
             response: Some(ProviderResponse::OpenAI),
             url: Template::new("https://api.openai.com/v1/chat/completions"),
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
+            auth_methods: vec![crate::domain::AuthMethod::ApiKey],
             url_params: vec![],
             credential: None,
             custom_headers: None,
@@ -1403,10 +1403,10 @@ mod tests {
     fn test_cli_provider_display_ip_address() {
         let fixture = AnyProvider::Url(Provider {
             id: ProviderId::FORGE,
-            provider_type: forge_domain::ProviderType::Llm,
+            provider_type: crate::domain::ProviderType::Llm,
             response: Some(ProviderResponse::OpenAI),
             url: Url::parse("http://192.168.1.1:8080/chat/completions").unwrap(),
-            auth_methods: vec![forge_domain::AuthMethod::ApiKey],
+            auth_methods: vec![crate::domain::AuthMethod::ApiKey],
             url_params: vec![],
             credential: None,
             custom_headers: None,

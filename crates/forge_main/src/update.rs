@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use colored::Colorize;
-use forge_api::API;
-use forge_config::Update;
-use forge_select::ForgeWidget;
+use crate::api::API;
+use crate::config::Update;
+use crate::select::ForgeWidget;
 use update_informer::{Check, Version, registry};
 
 use crate::version::VERSION;
@@ -28,7 +28,7 @@ async fn execute_update_command(api: Arc<impl API>, auto_update: bool) {
                 let should_exit = if auto_update {
                     true
                 } else {
-                    let answer = forge_select::ForgeWidget::confirm(
+                    let answer = crate::select::ForgeWidget::confirm(
                         "You need to close forge to complete update. Do you want to close it now?",
                     )
                     .with_default(true)

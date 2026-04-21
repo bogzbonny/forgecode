@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use convert_case::{Case, Casing};
 use derive_setters::Setters;
-use forge_api::{AgentId, ModelId, Usage};
+use crate::api::{AgentId, ModelId, Usage};
 use nu_ansi_term::{Color, Style};
 use reedline::{Prompt, PromptHistorySearchStatus};
 
@@ -134,8 +134,8 @@ impl Prompt for ForgePrompt {
             && active
         {
             let prefix = match tokens {
-                forge_api::TokenCount::Actual(_) => "",
-                forge_api::TokenCount::Approx(_) => "~",
+                crate::api::TokenCount::Actual(_) => "",
+                crate::api::TokenCount::Approx(_) => "~",
             };
             let count_str = format!("{}{}", prefix, humanize_number(*tokens));
             write!(
@@ -279,9 +279,9 @@ mod tests {
     fn test_render_prompt_right_active_with_tokens() {
         // Tokens > 0 → active colours; approx tokens show "~" prefix
         let usage = Usage {
-            prompt_tokens: forge_api::TokenCount::Actual(10),
-            completion_tokens: forge_api::TokenCount::Actual(20),
-            total_tokens: forge_api::TokenCount::Approx(30),
+            prompt_tokens: crate::api::TokenCount::Actual(10),
+            completion_tokens: crate::api::TokenCount::Actual(20),
+            total_tokens: crate::api::TokenCount::Approx(30),
             ..Default::default()
         };
         let mut prompt = ForgePrompt::default();
@@ -349,9 +349,9 @@ mod tests {
     fn test_render_prompt_right_strips_provider_prefix() {
         // Model ID like "openai/gpt-4o" should show only "gpt-4o"
         let usage = Usage {
-            prompt_tokens: forge_api::TokenCount::Actual(10),
-            completion_tokens: forge_api::TokenCount::Actual(20),
-            total_tokens: forge_api::TokenCount::Actual(30),
+            prompt_tokens: crate::api::TokenCount::Actual(10),
+            completion_tokens: crate::api::TokenCount::Actual(20),
+            total_tokens: crate::api::TokenCount::Actual(30),
             ..Default::default()
         };
         let mut prompt = ForgePrompt::default();
@@ -368,7 +368,7 @@ mod tests {
     fn test_render_prompt_right_with_cost() {
         // Cost shown when active
         let usage = Usage {
-            total_tokens: forge_api::TokenCount::Actual(1500),
+            total_tokens: crate::api::TokenCount::Actual(1500),
             cost: Some(0.01),
             ..Default::default()
         };

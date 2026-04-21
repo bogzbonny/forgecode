@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueEnum};
-use forge_domain::{AgentId, ConversationId, Effort, ModelId, ProviderId};
+use crate::domain::{AgentId, ConversationId, Effort, ModelId, ProviderId};
 
 #[derive(Parser)]
 #[command(version = env!("CARGO_PKG_VERSION"))]
@@ -306,7 +306,7 @@ pub enum ListCommand {
         /// Filter providers by type (e.g., llm, context_engine). Can be
         /// specified multiple times.
         #[arg(long = "type", short = 't')]
-        types: Vec<forge_domain::ProviderType>,
+        types: Vec<crate::domain::ProviderType>,
     },
 
     /// List available models.
@@ -445,11 +445,11 @@ pub enum Scope {
     User,
 }
 
-impl From<Scope> for forge_domain::Scope {
+impl From<Scope> for crate::domain::Scope {
     fn from(value: Scope) -> Self {
         match value {
-            Scope::Local => forge_domain::Scope::Local,
-            Scope::User => forge_domain::Scope::User,
+            Scope::Local => crate::domain::Scope::Local,
+            Scope::User => crate::domain::Scope::User,
         }
     }
 }
@@ -686,7 +686,7 @@ pub enum ProviderCommand {
         /// Filter providers by type (e.g., llm, context_engine). Can be
         /// specified multiple times.
         #[arg(long = "type", short = 't')]
-        types: Vec<forge_domain::ProviderType>,
+        types: Vec<crate::domain::ProviderType>,
     },
 }
 
@@ -745,7 +745,7 @@ pub struct DataCommandGroup {
     pub concurrency: usize,
 }
 
-impl From<DataCommandGroup> for forge_domain::DataGenerationParameters {
+impl From<DataCommandGroup> for crate::domain::DataGenerationParameters {
     fn from(value: DataCommandGroup) -> Self {
         Self {
             input: value.input.into(),
@@ -790,8 +790,8 @@ mod tests {
             user_prompt: None,
             concurrency: 5,
         };
-        let actual: forge_domain::DataGenerationParameters = fixture.into();
-        let expected = forge_domain::DataGenerationParameters {
+        let actual: crate::domain::DataGenerationParameters = fixture.into();
+        let expected = crate::domain::DataGenerationParameters {
             input: PathBuf::from("path/to/input.jsonl"),
             schema: PathBuf::from("path/to/schema.json"),
             system_prompt: Some(PathBuf::from("system prompt")),

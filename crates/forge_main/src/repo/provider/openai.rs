@@ -1,0 +1,583 @@
+use std::sync::Arc;
+
+use anyhow::{Context as _, Result};
+use crate::app::domain::{
+    ChatCompletionMessage, Context as ChatContext, Model, ModelId, ProviderId, ResultStream,
+    Transformer,
+};
+use crate::app::dto::openai::{ListModelResponse, ProviderPipeline, Request, Response};
+use crate::app::{EnvironmentInfra, HttpInfra};
+use crate::domain::{ChatRepository, Provider};
+use crate::infra::sanitize_headers;
+use reqwest::header::AUTHORIZATION;
+use tokio_stream::StreamExt;
+use tracing::{debug, info};
+use url::Url;
+
+use super::event::into_chat_completion_message;
+use super::retry::into_retry;
+use super::utils::{create_headers, format_http_context, join_url};
+
+  /// Enhances error messages with provider-specific helpful information
+fn enhance_error(error: anyhow::Error, _provider_id: &ProviderId) -> anyhow::Error {
+    error
+}
+
+#[derive(Clone)]
+struct OpenAIProvider<H> {
+    provider: Provider<Url>,
+    http: Arc<H>,
+}
+
+impl<H: HttpInfra> OpenAIProvider<H> {
+    pub fn new(provider: Provider<Url>, http: Arc<H>) -> Self {
+        Self { provider, http }
+    }
+
+    // Optional headers for certain provider integrations:
+    // - `HTTP-Referer`: Identifies your app on the provider's platform
+    // - `X-Title`: Sets/modifies your app's title
+    fn get_headers(&self) -> Vec<(String, String)> {
+        let mut headers = Vec::new();
+        if let Some(api_key) = self
+            .provider
+            .credential
+            .as_ref()
+            .map(|c| match &c.auth_details {
+                crate::domain::AuthDetails::ApiKey(key) => key.as_str(),
+                crate::domain::AuthDetails::OAuthWithApiKey { api_key, .. } => api_key.as_str(),
+                crate::domain::AuthDetails::OAuth { tokens, .. } => tokens.access_token.as_str(),
+            })
+        {
+            headers.push((AUTHORIZATION.to_string(), format!("Bearer {api_key}")));
+        }
+        self.provider
+            .auth_methods
+            .iter()
+            .for_each(|method| match method {
+                crate::domain::AuthMethod::ApiKey => {}
+                crate::domain::AuthMethod::OAuthDevice(oauth_config) => {
+                    if let Some(custom_headers) = &oauth_config.custom_headers {
+                        custom_headers.iter().for_each(|(k, v)| {
+                            headers.push((k.clone(), v.clone()));
+                        });
+                    }
+                }
+                crate::domain::AuthMethod::OAuthCode(oauth_config) => {
+                    if let Some(custom_headers) = &oauth_config.custom_headers {
+                        custom_headers.iter().for_each(|(k, v)| {
+                            headers.push((k.clone(), v.clone()));
+                        });
+                    }
+                }
+            });
+        // Append provider-level custom headers (from provider.json config)
+        if let Some(custom_headers) = &self.provider.custom_headers {
+            for (k, v) in custom_headers {
+                headers.push((k.clone(), v.clone()));
+            }
+        }
+        headers
+    }
+
+   /// Creates headers for the request
+    fn get_headers_with_request(&self, _request: &Request) -> Vec<(String, String)> {
+        self.get_headers()
+    }
+
+    async fn inner_chat(
+        &self,
+        model: &ModelId,
+        context: ChatContext,
+    ) -> ResultStream<ChatCompletionMessage, anyhow::Error> {
+        let mut request = Request::from(context).model(model.clone());
+        let mut pipeline = ProviderPipeline::new(&self.provider);
+        request = pipeline.transform(request);
+
+        let url = self.provider.url.clone();
+        let headers = create_headers(self.get_headers_with_request(&request));
+
+        info!(
+            url = %url,
+            model = %model,
+            headers = ?sanitize_headers(&headers),
+            message_count = %request.message_count(),
+            message_cache_count = %request.message_cache_count(),
+            "Connecting Upstream"
+        );
+
+        let json_bytes =
+            serde_json::to_vec(&request).with_context(|| "Failed to serialize request")?;
+
+        let es = self
+            .http
+            .http_eventsource(&url, Some(headers), json_bytes.into())
+            .await
+            .with_context(|| format_http_context(None, "POST", &url))
+            .map_err(|e| enhance_error(e, &self.provider.id))?;
+
+        let stream = into_chat_completion_message::<Response>(url, es);
+
+        Ok(Box::pin(stream))
+    }
+
+    async fn inner_models(&self) -> Result<Vec<crate::app::domain::Model>> {
+        let models = self
+            .provider
+            .models()
+            .ok_or_else(|| anyhow::anyhow!("Provider models configuration is required"))?;
+
+        match models {
+            crate::domain::ModelSource::Url(url) => {
+                debug!(url = %url, "Fetching models");
+                match self.fetch_models(url.as_str()).await {
+                    Err(error) => {
+                        tracing::error!(error = ?error, "Failed to fetch models");
+                        anyhow::bail!(error)
+                    }
+                    Ok(response) => {
+                        let data: ListModelResponse = serde_json::from_str(&response)
+                            .with_context(|| format_http_context(None, "GET", url))
+                            .with_context(|| "Failed to deserialize models response")?;
+                        Ok(data.data.into_iter().map(Into::into).collect())
+                    }
+                }
+            }
+            crate::domain::ModelSource::Hardcoded(models) => {
+                debug!("Using hardcoded models");
+                Ok(models.clone())
+            }
+        }
+    }
+
+    async fn fetch_models(&self, url: &str) -> Result<String, anyhow::Error> {
+        let headers = create_headers(self.get_headers());
+        let url = join_url(url, "")?;
+        info!(method = "GET", url = %url, headers = ?sanitize_headers(&headers), "Fetching Models");
+
+        let response = self
+            .http
+            .http_get(&url, Some(headers))
+            .await
+            .with_context(|| format_http_context(None, "GET", &url))
+            .with_context(|| "Failed to fetch the models")?;
+
+        let status = response.status();
+        let ctx_message = format_http_context(Some(status), "GET", &url);
+
+        let response_text = response
+            .text()
+            .await
+            .with_context(|| ctx_message.clone())
+            .with_context(|| "Failed to decode response into text")?;
+
+        if status.is_success() {
+            Ok(response_text)
+        } else {
+            Err(anyhow::anyhow!(response_text))
+                .with_context(|| ctx_message)
+                .with_context(|| "Failed to fetch the models")
+        }
+    }
+
+ }
+
+impl<T: HttpInfra> OpenAIProvider<T> {
+    pub async fn chat(
+        &self,
+        model: &ModelId,
+        context: ChatContext,
+    ) -> ResultStream<ChatCompletionMessage, anyhow::Error> {
+        self.inner_chat(model, context).await
+    }
+
+    pub async fn models(&self) -> Result<Vec<crate::app::domain::Model>> {
+        self.inner_models().await
+    }
+}
+
+/// Repository for OpenAI-compatible provider responses
+///
+/// Handles providers that use OpenAI's API format including:
+/// - OpenAI
+/// - Azure OpenAI
+/// - Any OpenAI-compatible provider
+pub struct OpenAIResponseRepository<F> {
+    infra: Arc<F>,
+}
+
+impl<F> OpenAIResponseRepository<F> {
+    pub fn new(infra: Arc<F>) -> Self {
+        Self { infra }
+    }
+}
+
+#[async_trait::async_trait]
+impl<F: HttpInfra + EnvironmentInfra<Config = crate::config::ForgeConfig> + 'static> ChatRepository
+    for OpenAIResponseRepository<F>
+{
+    async fn chat(
+        &self,
+        model_id: &ModelId,
+        context: ChatContext,
+        provider: Provider<Url>,
+    ) -> ResultStream<ChatCompletionMessage, anyhow::Error> {
+        let retry_config = self.infra.get_config()?.retry.unwrap_or_default();
+        let provider_id = provider.id.clone();
+        let provider_client = OpenAIProvider::new(provider, self.infra.clone());
+        let stream = provider_client
+            .chat(model_id, context)
+            .await
+            .map_err(|e| into_retry(e, &retry_config))?;
+
+        Ok(Box::pin(stream.map(move |item| {
+            item.map_err(|e| enhance_error(into_retry(e, &retry_config), &provider_id))
+        })))
+    }
+
+    async fn models(&self, provider: Provider<Url>) -> anyhow::Result<Vec<Model>> {
+        let retry_config = self.infra.get_config()?.retry.unwrap_or_default();
+        let provider_client = OpenAIProvider::new(provider, self.infra.clone());
+        provider_client
+            .models()
+            .await
+            .map_err(|e| into_retry(e, &retry_config))
+            .context("Failed to fetch models from OpenAI-compatible provider")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use std::collections::HashMap;
+
+    use anyhow::Context;
+    use bytes::Bytes;
+    use crate::app::HttpInfra;
+    use crate::app::domain::{Provider, ProviderId, ProviderResponse};
+    use crate::app::dto::openai::{ContentPart, ImageUrl, Message, MessageContent, Role};
+    use reqwest::header::HeaderMap;
+    use reqwest_eventsource::EventSource;
+    use url::Url;
+
+    use super::*;
+    use super::super::mock_server::{MockServer, normalize_ports};
+
+    // Test helper functions
+    fn make_credential(provider_id: ProviderId, key: &str) -> Option<crate::domain::AuthCredential> {
+        Some(crate::domain::AuthCredential {
+            id: provider_id,
+            auth_details: crate::domain::AuthDetails::ApiKey(crate::domain::ApiKey::from(
+                key.to_string(),
+            )),
+            url_params: HashMap::new(),
+        })
+    }
+
+    fn openai(key: &str) -> Provider<Url> {
+        Provider {
+            id: ProviderId::OPENAI_COMPATIBLE,
+            provider_type: crate::domain::ProviderType::Llm,
+            response: Some(ProviderResponse::OpenAI),
+            url: Url::parse("https://api.openai.com/v1/chat/completions").unwrap(),
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, key),
+            custom_headers: None,
+            auth_methods: vec![crate::domain::AuthMethod::ApiKey],
+            url_params: vec![],
+            models: Some(crate::domain::ModelSource::Url(
+                Url::parse("https://api.openai.com/v1/models").unwrap(),
+            )),
+        }
+    }
+
+ 
+
+    // Mock implementation of HttpInfra for testing
+    #[derive(Clone)]
+    struct MockHttpClient {
+        client: reqwest::Client,
+    }
+
+    impl MockHttpClient {
+        fn new() -> Self {
+            Self { client: reqwest::Client::new() }
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl HttpInfra for MockHttpClient {
+        async fn http_get(
+            &self,
+            url: &Url,
+            _headers: Option<HeaderMap>,
+        ) -> anyhow::Result<reqwest::Response> {
+            let mut request = self.client.get(url.clone());
+            if let Some(headers) = _headers {
+                request = request.headers(headers);
+            }
+            Ok(request.send().await?)
+        }
+
+        async fn http_post(
+            &self,
+            _url: &Url,
+            _headers: Option<HeaderMap>,
+            _body: Bytes,
+        ) -> anyhow::Result<reqwest::Response> {
+            unimplemented!()
+        }
+
+        async fn http_delete(&self, _url: &Url) -> anyhow::Result<reqwest::Response> {
+            unimplemented!()
+        }
+
+        async fn http_eventsource(
+            &self,
+            _url: &Url,
+            _headers: Option<HeaderMap>,
+            _body: Bytes,
+        ) -> anyhow::Result<EventSource> {
+            unimplemented!()
+        }
+    }
+
+    fn create_provider(base_url: &str) -> anyhow::Result<OpenAIProvider<MockHttpClient>> {
+        let provider = Provider {
+            id: ProviderId::OPENAI_COMPATIBLE,
+            provider_type: crate::domain::ProviderType::Llm,
+            response: Some(ProviderResponse::OpenAI),
+            url: reqwest::Url::parse(base_url)?,
+            credential: make_credential(ProviderId::OPENAI_COMPATIBLE, "test-api-key"),
+            custom_headers: None,
+            auth_methods: vec![crate::domain::AuthMethod::ApiKey],
+            url_params: vec![],
+            models: Some(crate::domain::ModelSource::Url(
+                reqwest::Url::parse(base_url)?.join("models")?,
+            )),
+        };
+
+        Ok(OpenAIProvider::new(
+            provider,
+            Arc::new(MockHttpClient::new()),
+        ))
+    }
+
+    fn create_mock_models_response() -> serde_json::Value {
+        serde_json::json!({
+            "data": [
+                {
+                    "id": "model-1",
+                    "name": "Test Model 1",
+                    "description": "A test model",
+                    "context_length": 4096,
+                    "supported_parameters": ["tools", "supports_parallel_tool_calls"]
+                },
+                {
+                    "id": "model-2",
+                    "name": "Test Model 2",
+                    "description": "Another test model",
+                    "context_length": 8192,
+                    "supported_parameters": ["tools"]
+                }
+            ]
+        })
+    }
+
+    fn create_error_response(message: &str, code: u16) -> serde_json::Value {
+        serde_json::json!({
+            "error": {
+                "message": message,
+                "code": code
+            }
+        })
+    }
+
+    fn create_empty_response() -> serde_json::Value {
+        serde_json::json!({ "data": [] })
+    }
+
+    #[tokio::test]
+    async fn test_fetch_models_success() -> anyhow::Result<()> {
+        let mut fixture = MockServer::new().await;
+        let mock = fixture
+            .mock_models(create_mock_models_response(), 200)
+            .await;
+        let provider = create_provider(&fixture.url())?;
+        let actual = provider.models().await?;
+
+        mock.assert_async().await;
+        insta::assert_json_snapshot!(actual);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_fetch_models_http_error_status() -> anyhow::Result<()> {
+        let mut fixture = MockServer::new().await;
+        let mock = fixture
+            .mock_models(create_error_response("Invalid API key", 401), 401)
+            .await;
+
+        let provider = create_provider(&fixture.url())?;
+        let actual = provider.models().await;
+
+        mock.assert_async().await;
+
+        // Verify that we got an error
+        assert!(actual.is_err());
+        insta::assert_snapshot!(normalize_ports(format!("{:#?}", actual.unwrap_err())));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_fetch_models_server_error() -> anyhow::Result<()> {
+        let mut fixture = MockServer::new().await;
+        let mock = fixture
+            .mock_models(create_error_response("Internal Server Error", 500), 500)
+            .await;
+
+        let provider = create_provider(&fixture.url())?;
+        let actual = provider.models().await;
+
+        mock.assert_async().await;
+
+        // Verify that we got an error
+        assert!(actual.is_err());
+        insta::assert_snapshot!(normalize_ports(format!("{:#?}", actual.unwrap_err())));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_fetch_models_empty_response() -> anyhow::Result<()> {
+        let mut fixture = MockServer::new().await;
+        let mock = fixture.mock_models(create_empty_response(), 200).await;
+
+        let provider = create_provider(&fixture.url())?;
+        let actual = provider.models().await?;
+
+        mock.assert_async().await;
+        assert!(actual.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn test_error_deserialization() -> Result<()> {
+        let content = serde_json::to_string(&serde_json::json!({
+          "error": {
+            "message": "This endpoint's maximum context length is 16384 tokens",
+            "code": 400
+          }
+        }))
+        .unwrap();
+        let message = serde_json::from_str::<Response>(&content)
+            .with_context(|| "Failed to parse response")?;
+        let message = ChatCompletionMessage::try_from(message.clone());
+
+        assert!(message.is_err());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_detailed_error_message_included() -> anyhow::Result<()> {
+        let mut fixture = MockServer::new().await;
+        let detailed_error = create_error_response(
+            "Authentication failed: API key is invalid or expired. Please check your API key.",
+            401,
+        );
+        let mock = fixture.mock_models(detailed_error, 401).await;
+
+        let provider = create_provider(&fixture.url())?;
+        let actual = provider.models().await;
+
+        mock.assert_async().await;
+        assert!(actual.is_err());
+        insta::assert_snapshot!(normalize_ports(format!("{:#?}", actual.unwrap_err())));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_headers_with_request_openai_provider() -> anyhow::Result<()> {
+        let provider = openai("test-key");
+        let http_client = Arc::new(MockHttpClient::new());
+        let openai_provider = OpenAIProvider::new(provider, http_client);
+
+        // Create a request with session_id
+        let request = Request {
+            session_id: Some("test-conversation-id".to_string()),
+            ..Default::default()
+        };
+
+        let headers = openai_provider.get_headers_with_request(&request);
+
+        // Should only have Authorization header
+        assert_eq!(headers.len(), 1);
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_get_headers_fallback() -> anyhow::Result<()> {
+        let provider = openai("test-key");
+        let http_client = Arc::new(MockHttpClient::new());
+        let openai_provider = OpenAIProvider::new(provider, http_client);
+
+        let headers = openai_provider.get_headers();
+
+        // Should only have Authorization header
+        assert_eq!(headers.len(), 1);
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
+        );
+        Ok(())
+    }
+
+   #[test]
+    fn test_get_headers_includes_custom_headers() {
+        let mut provider = openai("test-key");
+        let mut custom = std::collections::HashMap::new();
+        custom.insert("User-Agent".to_string(), "TestAgent/1.0.0".to_string());
+        custom.insert("X-Custom".to_string(), "custom-value".to_string());
+        provider.custom_headers = Some(custom);
+
+        let http_client = Arc::new(MockHttpClient::new());
+        let openai_provider = OpenAIProvider::new(provider, http_client);
+        let headers = openai_provider.get_headers();
+
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "User-Agent" && v == "TestAgent/1.0.0")
+        );
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "X-Custom" && v == "custom-value")
+        );
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
+        );
+    }
+
+   #[test]
+    fn test_get_headers_no_custom_headers() {
+        let provider = openai("test-key");
+        let http_client = Arc::new(MockHttpClient::new());
+        let openai_provider = OpenAIProvider::new(provider, http_client);
+        let headers = openai_provider.get_headers();
+
+        // Only authorization header should be present
+        assert_eq!(headers.len(), 1);
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "authorization" && v == "Bearer test-key")
+        );
+    }
+}

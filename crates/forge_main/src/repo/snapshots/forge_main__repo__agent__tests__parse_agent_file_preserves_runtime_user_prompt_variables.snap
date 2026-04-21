@@ -1,0 +1,6 @@
+---
+source: crates/forge_main/src/repo/agent.rs
+expression: actual_user_prompt
+---
+<{{event.name}}>{{event.value}}</{{event.name}}>
+<system_date>{{current_date}}</system_date>

@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use forge_select::ForgeWidget;
-use forge_walker::Walker;
+use crate::select::ForgeWidget;
+use crate::forge_walker::Walker;
 use reedline::{Completer, Span, Suggestion};
 
 use crate::completer::CommandCompleter;

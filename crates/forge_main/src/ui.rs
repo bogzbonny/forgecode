@@ -8,22 +8,22 @@ use anyhow::{Context, Result};
 use colored::Colorize;
 use console::style;
 use convert_case::{Case, Casing};
-use forge_api::{
+use crate::api::{
     API, AgentId, AnyProvider, ApiKeyRequest, AuthContextRequest, AuthContextResponse, ChatRequest,
     ChatResponse, CodeRequest, ConfigOperation, Conversation, ConversationId, DeviceCodeRequest,
     Event, InterruptionReason, ModelId, Provider, ProviderId, TextMessage, UserPrompt,
 };
-use forge_app::utils::{format_display_path, truncate_key};
-use forge_app::{CommitResult, ToolResolver};
-use forge_config::ForgeConfig;
-use forge_display::MarkdownFormat;
-use forge_domain::{
+use crate::app::utils::{format_display_path, truncate_key};
+use crate::app::{CommitResult, ToolResolver};
+use crate::config::ForgeConfig;
+use crate::display::MarkdownFormat;
+use crate::domain::{
     AuthMethod, ChatResponseContent, ConsoleWriter, ContextMessage, Role, TitleFormat, UserCommand,
 };
-use forge_fs::ForgeFS;
-use forge_select::ForgeWidget;
-use forge_spinner::SpinnerManager;
-use forge_walker::Walker;
+use crate::forge_fs::ForgeFS;
+use crate::select::ForgeWidget;
+use crate::spinner::SpinnerManager;
+use crate::forge_walker::Walker;
 use futures::future;
 use strum::IntoEnumIterator;
 use tokio_stream::StreamExt;
@@ -62,9 +62,9 @@ struct ConversationDump {
 
 /// Formats an MCP server config for display, redacting sensitive information.
 /// Returns the command/URL string only.
-fn format_mcp_server(server: &forge_domain::McpServerConfig) -> String {
+fn format_mcp_server(server: &crate::domain::McpServerConfig) -> String {
     match server {
-        forge_domain::McpServerConfig::Stdio(stdio) => {
+        crate::domain::McpServerConfig::Stdio(stdio) => {
             let mut output = format!("{} ", stdio.command);
             for arg in &stdio.args {
                 output.push_str(&format!("{arg} "));
@@ -74,16 +74,16 @@ fn format_mcp_server(server: &forge_domain::McpServerConfig) -> String {
             }
             output.trim().to_string()
         }
-        forge_domain::McpServerConfig::Http(http) => http.url.clone(),
+        crate::domain::McpServerConfig::Http(http) => http.url.clone(),
     }
 }
 
 /// Formats HTTP headers for display, redacting values.
 /// Returns None if there are no headers.
-fn format_mcp_headers(server: &forge_domain::McpServerConfig) -> Option<String> {
+fn format_mcp_headers(server: &crate::domain::McpServerConfig) -> Option<String> {
     match server {
-        forge_domain::McpServerConfig::Stdio(_) => None,
-        forge_domain::McpServerConfig::Http(http) => {
+        crate::domain::McpServerConfig::Stdio(_) => None,
+        crate::domain::McpServerConfig::Http(http) => {
             if http.headers.is_empty() {
                 None
             } else {
@@ -155,7 +155,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
 
     // Handle creating a new conversation
     async fn on_new(&mut self) -> Result<()> {
-        let config = forge_config::ForgeConfig::read().unwrap_or_default();
+        let config = crate::config::ForgeConfig::read().unwrap_or_default();
         self.config = config.clone();
         self.api = Arc::new((self.new_api)(config));
         self.init_state(false).await?;
@@ -385,7 +385,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     }
 
     async fn handle_generate_conversation_id(&mut self) -> Result<()> {
-        let conversation_id = forge_domain::ConversationId::generate();
+        let conversation_id = crate::domain::ConversationId::generate();
         println!("{}", conversation_id.into_string());
         Ok(())
     }
@@ -445,10 +445,10 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
             }
             TopLevelCommand::Mcp(mcp_command) => match mcp_command.command {
                 McpCommand::Import(import_args) => {
-                    let scope: forge_domain::Scope = import_args.scope.into();
+                    let scope: crate::domain::Scope = import_args.scope.into();
 
                     // Parse the incoming MCP configuration
-                    let incoming_config: forge_domain::McpConfig = serde_json::from_str(&import_args.json)
+                    let incoming_config: crate::domain::McpConfig = serde_json::from_str(&import_args.json)
                         .context("Failed to parse MCP configuration JSON. Expected format: {\"mcpServers\": {...}}")?;
 
                     // Read only the scope-specific config (not merged)
@@ -477,8 +477,8 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                     self.on_show_mcp_servers(mcp_command.porcelain).await?;
                 }
                 McpCommand::Remove(rm) => {
-                    let name = forge_api::ServerName::from(rm.name);
-                    let scope: forge_domain::Scope = rm.scope.into();
+                    let name = crate::api::ServerName::from(rm.name);
+                    let scope: crate::domain::Scope = rm.scope.into();
 
                     // Read only the scope-specific config (not merged)
                     let mut scope_config = self.api.read_mcp_config(Some(&scope)).await?;
@@ -492,7 +492,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                     self.writeln_title(TitleFormat::info(format!("Removed server: {name}")))?;
                 }
                 McpCommand::Show(val) => {
-                    let name = forge_api::ServerName::from(val.name);
+                    let name = crate::api::ServerName::from(val.name);
                     let config = self.api.read_mcp_config(None).await?;
                     let server = config
                         .mcp_servers
@@ -611,7 +611,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                         ends_with,
                     } => {
                         let mut params =
-                            forge_domain::SearchParams::new(&query, &use_case).limit(limit);
+                            crate::domain::SearchParams::new(&query, &use_case).limit(limit);
                         if let Some(k) = top_k {
                             params = params.top_k(k);
                         }
@@ -667,7 +667,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                 return Ok(());
             }
             TopLevelCommand::Update(args) => {
-                let update = forge_config::Update::default().auto_update(args.no_confirm);
+                let update = crate::config::Update::default().auto_update(args.no_confirm);
                 on_update(self.api.clone(), Some(&update)).await;
                 return Ok(());
             }
@@ -805,12 +805,12 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     /// Uses the API layer which delegates to rmcp's OAuth state machine
     /// for metadata discovery, dynamic registration, PKCE, and token exchange.
     async fn handle_mcp_login(&mut self, name: &str) -> anyhow::Result<()> {
-        let server_name = forge_api::ServerName::from(name.to_string());
+        let server_name = crate::api::ServerName::from(name.to_string());
         let config = self.api.read_mcp_config(None).await?;
         let server = config.mcp_servers.get(&server_name);
 
         match server {
-            Some(forge_domain::McpServerConfig::Http(http)) => {
+            Some(crate::domain::McpServerConfig::Http(http)) => {
                 // Check auth status first
                 let status = self.api.mcp_auth_status(&http.url).await?;
                 if status == "authenticated" {
@@ -878,12 +878,12 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
             self.api.mcp_logout(None).await?;
             self.writeln_title(TitleFormat::info("Removed all MCP OAuth credentials"))?;
         } else {
-            let server_name = forge_api::ServerName::from(name.to_string());
+            let server_name = crate::api::ServerName::from(name.to_string());
             let config = self.api.read_mcp_config(None).await?;
             let server = config.mcp_servers.get(&server_name);
 
             match server {
-                Some(forge_domain::McpServerConfig::Http(http)) => {
+                Some(crate::domain::McpServerConfig::Http(http)) => {
                     self.api.mcp_logout(Some(&http.url)).await?;
                     self.writeln_title(TitleFormat::info(format!(
                         "Removed OAuth credentials for MCP server '{}'",
@@ -1142,7 +1142,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     async fn on_show_providers(
         &mut self,
         porcelain: bool,
-        types: Vec<forge_domain::ProviderType>,
+        types: Vec<crate::domain::ProviderType>,
     ) -> anyhow::Result<()> {
         let mut providers = self.api.get_providers().await?;
 
@@ -1247,7 +1247,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                 // Add image modality support indicator
                 let supports_image = model
                     .input_modalities
-                    .contains(&forge_domain::InputModality::Image);
+                    .contains(&crate::domain::InputModality::Image);
                 info = info.add_key_value(
                     "Image",
                     if supports_image {
@@ -1460,7 +1460,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
             // For human-readable mode, add a title and syntax-highlight the TOML
             self.writeln("\nCONFIGURATION\n".bold().dimmed())?;
             let highlighted =
-                forge_display::SyntaxHighlighter::default().highlight(&config_toml, "toml");
+                crate::display::SyntaxHighlighter::default().highlight(&config_toml, "toml");
             self.writeln(highlighted)?;
         }
 
@@ -1509,8 +1509,8 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
 
         for (name, server) in mcp_servers.mcp_servers {
             let label = match server {
-                forge_domain::McpServerConfig::Stdio(_) => "Command",
-                forge_domain::McpServerConfig::Http(_) => "URL",
+                crate::domain::McpServerConfig::Stdio(_) => "Command",
+                crate::domain::McpServerConfig::Http(_) => "URL",
             };
 
             info = info
@@ -2126,7 +2126,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
             .prompt()?;
 
         if let Some(effort_str) = selected {
-            let effort = forge_domain::Effort::from_str(&effort_str)
+            let effort = crate::domain::Effort::from_str(&effort_str)
                 .map_err(|_| anyhow::anyhow!("Invalid effort level: {effort_str}"))?;
             self.api
                 .update_config(vec![ConfigOperation::SetReasoningEffort(effort.clone())])
@@ -2143,7 +2143,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     async fn on_config_commit_model(&mut self) -> anyhow::Result<()> {
         let selection = self.select_model(None).await?;
         if let Some((model, provider_id)) = selection {
-            let commit_config = forge_domain::ModelConfig::new(provider_id.clone(), model.clone());
+            let commit_config = crate::domain::ModelConfig::new(provider_id.clone(), model.clone());
             self.api
                 .update_config(vec![ConfigOperation::SetCommitConfig(Some(commit_config))])
                 .await?;
@@ -2158,7 +2158,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     async fn on_config_suggest_model(&mut self) -> anyhow::Result<()> {
         let selection = self.select_model(None).await?;
         if let Some((model, provider_id)) = selection {
-            let suggest_config = forge_domain::ModelConfig::new(provider_id.clone(), model.clone());
+            let suggest_config = crate::domain::ModelConfig::new(provider_id.clone(), model.clone());
             self.api
                 .update_config(vec![ConfigOperation::SetSuggestConfig(suggest_config)])
                 .await?;
@@ -2171,7 +2171,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
 
     /// Opens the global config file in the system editor.
     async fn on_config_edit(&mut self) -> anyhow::Result<()> {
-        let config_path = forge_config::ConfigReader::config_path();
+        let config_path = crate::config::ConfigReader::config_path();
 
         // Ensure parent directory exists
         if let Some(parent) = config_path.parent() {
@@ -2473,9 +2473,9 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
 
         // Find the last assistant message
         let content = context.messages.iter().rev().find_map(|msg| match &**msg {
-            forge_domain::ContextMessage::Text(forge_api::TextMessage {
+            crate::domain::ContextMessage::Text(crate::api::TextMessage {
                 content,
-                role: forge_domain::Role::Assistant,
+                role: crate::domain::Role::Assistant,
                 ..
             }) => Some(content.clone()),
             _ => None,
@@ -2606,7 +2606,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
 
                 let supports_image = model
                     .input_modalities
-                    .contains(&forge_domain::InputModality::Image);
+                    .contains(&crate::domain::InputModality::Image);
                 info = info.add_key_value(
                     "Image",
                     if supports_image {
@@ -3168,7 +3168,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
             .await?
             .into_iter()
             .filter(|p| {
-                let filter = forge_domain::ProviderType::Llm;
+                let filter = crate::domain::ProviderType::Llm;
                 match &p {
                     AnyProvider::Url(provider) => provider.provider_type == filter,
                     AnyProvider::Template(provider) => provider.provider_type == filter,
@@ -3210,7 +3210,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
         // Set model and provider atomically as a single config operation
         self.api
             .update_config(vec![ConfigOperation::SetSessionConfig(
-                forge_domain::ModelConfig::new(provider_id, model.clone()),
+                crate::domain::ModelConfig::new(provider_id, model.clone()),
             )])
             .await?;
 
@@ -3288,7 +3288,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                 .await?;
             self.api
                 .update_config(vec![ConfigOperation::SetSessionConfig(
-                    forge_domain::ModelConfig::new(provider.id.clone(), model_id.clone()),
+                    crate::domain::ModelConfig::new(provider.id.clone(), model_id.clone()),
                 )])
                 .await?;
             self.writeln_title(
@@ -3333,7 +3333,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                 compatible_model.expect("compatible_model is Some when !needs_model_selection");
             self.api
                 .update_config(vec![ConfigOperation::SetSessionConfig(
-                    forge_domain::ModelConfig::new(provider.id.clone(), model),
+                    crate::domain::ModelConfig::new(provider.id.clone(), model),
                 )])
                 .await?;
 
@@ -3764,7 +3764,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                     )?;
                 }
                 if let Some(format) = self.config.auto_dump.clone() {
-                    let html = matches!(format, forge_config::AutoDumpFormat::Html);
+                    let html = matches!(format, crate::config::AutoDumpFormat::Html);
                     self.on_dump(html).await?;
                 }
             }
@@ -3952,7 +3952,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                 self.on_show_config(porcelain).await?;
             }
             crate::cli::ConfigCommand::Path => {
-                let path = forge_config::ConfigReader::config_path();
+                let path = crate::config::ConfigReader::config_path();
                 self.writeln(path.display().to_string())?;
             }
             crate::cli::ConfigCommand::Migrate => {
@@ -4018,7 +4018,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                 // Validate provider exists and model belongs to that specific provider
                 let validated_model = self.validate_model(model.as_str(), Some(&provider)).await?;
                 let commit_config =
-                    forge_domain::ModelConfig::new(provider.clone(), validated_model.clone());
+                    crate::domain::ModelConfig::new(provider.clone(), validated_model.clone());
                 self.api
                     .update_config(vec![ConfigOperation::SetCommitConfig(Some(commit_config))])
                     .await?;
@@ -4031,7 +4031,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                 // Validate provider exists and model belongs to that specific provider
                 let validated_model = self.validate_model(model.as_str(), Some(&provider)).await?;
                 let suggest_config =
-                    forge_domain::ModelConfig::new(provider.clone(), validated_model.clone());
+                    crate::domain::ModelConfig::new(provider.clone(), validated_model.clone());
                 self.api
                     .update_config(vec![ConfigOperation::SetSuggestConfig(suggest_config)])
                     .await?;
@@ -4117,7 +4117,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     async fn validate_model(
         &self,
         model_str: &str,
-        provider: Option<&forge_domain::ProviderId>,
+        provider: Option<&crate::domain::ProviderId>,
     ) -> Result<ModelId> {
         let models = match provider {
             None => self.api.get_models().await?,
@@ -4190,8 +4190,8 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     }
 
     async fn on_index(&mut self, path: std::path::PathBuf, init: bool) -> anyhow::Result<()> {
-        use forge_domain::SyncProgress;
-        use forge_spinner::ProgressBarManager;
+        use crate::domain::SyncProgress;
+        use crate::spinner::ProgressBarManager;
 
         // Check if auth already exists and create if needed
         if !self.api.is_authenticated().await? {
@@ -4255,7 +4255,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     async fn on_query(
         &mut self,
         path: PathBuf,
-        params: forge_domain::SearchParams<'_>,
+        params: crate::domain::SearchParams<'_>,
     ) -> anyhow::Result<()> {
         self.spinner.start(Some("Searching workspace..."))?;
 
@@ -4273,7 +4273,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
 
         for result in results.iter() {
             match &result.node {
-                forge_domain::NodeData::FileChunk(chunk) => {
+                crate::domain::NodeData::FileChunk(chunk) => {
                     info = info.add_key_value(
                         "File",
                         format!(
@@ -4282,17 +4282,17 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
                         ),
                     );
                 }
-                forge_domain::NodeData::File(file) => {
+                crate::domain::NodeData::File(file) => {
                     info = info.add_key_value("File", format!("{} (full file)", file.file_path));
                 }
-                forge_domain::NodeData::FileRef(file_ref) => {
+                crate::domain::NodeData::FileRef(file_ref) => {
                     info =
                         info.add_key_value("File", format!("{} (reference)", file_ref.file_path));
                 }
-                forge_domain::NodeData::Note(note) => {
+                crate::domain::NodeData::Note(note) => {
                     info = info.add_key_value("Note", &note.content);
                 }
-                forge_domain::NodeData::Task(task) => {
+                crate::domain::NodeData::Task(task) => {
                     info = info.add_key_value("Task", &task.task);
                 }
             }
@@ -4304,7 +4304,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
     }
 
     /// Helper function to format workspace information consistently
-    fn format_workspace_info(workspace: &forge_domain::WorkspaceInfo, is_active: bool) -> Info {
+    fn format_workspace_info(workspace: &crate::domain::WorkspaceInfo, is_active: bool) -> Info {
         let updated_time = workspace
             .last_updated
             .map_or("NEVER".to_string(), humanize_time);
@@ -4390,7 +4390,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
 
                 // Add sync status summary if available
 
-                use forge_domain::SyncStatus;
+                use crate::domain::SyncStatus;
 
                 let in_sync = statuses
                     .iter()
@@ -4448,10 +4448,10 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
         }
 
         // Parse all workspace IDs
-        let parsed_ids: Vec<forge_domain::WorkspaceId> = workspace_ids
+        let parsed_ids: Vec<crate::domain::WorkspaceId> = workspace_ids
             .iter()
             .map(|id| {
-                forge_domain::WorkspaceId::from_string(id)
+                crate::domain::WorkspaceId::from_string(id)
                     .with_context(|| format!("Invalid workspace ID format: {}", id))
             })
             .collect::<anyhow::Result<Vec<_>>>()?;
@@ -4487,7 +4487,7 @@ impl<A: API + ConsoleWriter + 'static, F: Fn(ForgeConfig) -> A + Send + Sync> UI
         path: std::path::PathBuf,
         porcelain: bool,
     ) -> anyhow::Result<()> {
-        use forge_domain::SyncStatus;
+        use crate::domain::SyncStatus;
 
         if !porcelain {
             self.spinner.start(Some("Checking file status..."))?;
