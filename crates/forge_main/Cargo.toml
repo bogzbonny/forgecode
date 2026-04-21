@@ -23,7 +23,7 @@ colored.workspace = true
 
 anyhow.workspace = true
 derive_setters.workspace = true
-lazy_static.workspace = true
+#lazy_static.workspace = true
 reedline.workspace = true
 crossterm = "0.29.0"
 nu-ansi-term.workspace = true
@@ -122,7 +122,7 @@ html2md = "0.2.15"
 forge_tool_macros = { path = "../forge_tool_macros" }
 
 [target.'cfg(windows)'.dependencies]
-enable-ansi-support.workspace = true
+#enable-ansi-support.workspace = true
 windows-sys = { version = "0.61", features = ["Win32_System_Console"] }
 
 [target.'cfg(not(target_os = "android"))'.dependencies]

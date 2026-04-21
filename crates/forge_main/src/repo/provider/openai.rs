@@ -255,7 +255,6 @@ mod tests {
     use bytes::Bytes;
     use crate::app::HttpInfra;
     use crate::app::domain::{Provider, ProviderId, ProviderResponse};
-    use crate::app::dto::openai::{ContentPart, ImageUrl, Message, MessageContent, Role};
     use reqwest::header::HeaderMap;
     use reqwest_eventsource::EventSource;
     use url::Url;

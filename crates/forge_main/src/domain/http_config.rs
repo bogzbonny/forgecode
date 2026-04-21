@@ -8,7 +8,7 @@ use strum_macros::EnumString;
 ///
 /// # Example
 /// ```
-/// use crate::domain::{HttpConfig, TlsVersion, TlsBackend};
+/// use forge_main::domain::{HttpConfig, TlsVersion, TlsBackend};
 ///
 /// let config = HttpConfig {
 ///     min_tls_version: Some(TlsVersion::V1_2),
@@ -121,7 +121,7 @@ impl std::fmt::Display for TlsBackend {
 ///
 /// # Example
 /// ```
-/// use crate::domain::{HttpConfig, TlsVersion, TlsBackend};
+/// use forge_main::domain::{HttpConfig, TlsVersion, TlsBackend};
 ///
 /// let config = HttpConfig {
 ///     connect_timeout: 30,

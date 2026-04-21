@@ -759,16 +759,6 @@ mod tests {
         assert!(strategy.is_ok());
     }
 
-    /// Helper to build a JWT token with the given claims payload.
-    fn build_jwt(claims: &serde_json::Value) -> String {
-        use base64::Engine;
-        let header = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .encode(r#"{"alg":"RS256","typ":"JWT"}"#);
-       let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .encode(serde_json::to_vec(claims).unwrap());
-        format!("{header}.{payload}.fake_signature")
-    }
-
     #[tokio::test]
     async fn test_refresh_oauth_credential_preserves_url_params() {
         let fixture_config = OAuthConfig {

@@ -452,7 +452,7 @@ pub fn enforce_strict_schema(schema: &mut serde_json::Value, strict_mode: bool) 
 /// # Examples
 ///
 /// ```
-/// use crate::app::utils::is_binary_content_type;
+/// use forge_main::app::utils::is_binary_content_type;
 ///
 /// // Text content types are not binary
 /// assert!(!is_binary_content_type("text/html"));

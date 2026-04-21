@@ -494,7 +494,7 @@ impl<
 
 #[cfg(test)]
 mod tests {
-    use crate::app::domain::{AuthMethod, ProviderResponse};
+    use crate::app::domain::{ ProviderResponse};
     use pretty_assertions::assert_eq;
 
     use super::*;

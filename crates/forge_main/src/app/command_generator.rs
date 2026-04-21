@@ -111,7 +111,7 @@ where
 mod tests {
     use crate::domain::{
         AuthCredential, AuthDetails, AuthMethod, ChatCompletionMessage, Content, FinishReason,
-        ModelSource, ProviderId, ProviderResponse, ResultStream, Role,
+        ModelSource, ProviderId, ProviderResponse, ResultStream, 
     };
     use tokio::sync::Mutex;
     use url::Url;
