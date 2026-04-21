@@ -67,7 +67,7 @@ impl<H: HttpInfra> OpenAIResponsesProvider<H> {
         self.get_headers_for_conversation(None)
     }
 
-    fn get_headers_for_conversation(&self, conversation_id: Option<&str>) -> Vec<(String, String)> {
+    fn get_headers_for_conversation(&self, _conversation_id: Option<&str>) -> Vec<(String, String)> {
         let mut headers = Vec::new();
         if let Some(api_key) = self
             .provider
@@ -185,6 +185,7 @@ impl<T: HttpInfra> OpenAIResponsesProvider<T> {
 
 }
 
+#[allow(dead_code)]
 fn into_sse_parse_error<E>(error: eventsource_stream::EventStreamError<E>) -> anyhow::Error
 where
     E: std::fmt::Debug + std::fmt::Display + Send + Sync + 'static,

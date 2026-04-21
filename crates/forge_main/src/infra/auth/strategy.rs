@@ -106,8 +106,8 @@ impl<T: OAuthHttpProvider> AuthStrategy for OAuthCodeStrategy<T> {
                         ))
                     })?;
 
-                let access_token = token_response.access_token.clone();
-                let id_token = token_response.id_token.clone();
+                let _access_token = token_response.access_token.clone();
+                let _id_token = token_response.id_token.clone();
                 let credential = build_oauth_credential(
                     self.provider_id.clone(),
                     token_response,
