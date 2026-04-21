@@ -1,4 +1,4 @@
-use crate::forge_template::Element;
+use crate::template::Element;
 use serde_json::to_string_pretty;
 
 use crate::domain::context::ContextMessage;

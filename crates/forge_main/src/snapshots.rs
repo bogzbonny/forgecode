@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use crate::domain::Snapshot;
-use crate::forge_fs::ForgeFS;
+use crate::fs::ForgeFS;
 
 /// Implementation of the SnapshotService
 #[derive(Debug)]

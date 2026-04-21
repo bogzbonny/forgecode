@@ -6,7 +6,7 @@ use crate::domain::{
     AgentId, ChatRequest, ChatResponse, ChatResponseContent, Conversation, ConversationId, Event,
     TitleFormat, ToolCallContext, ToolDefinition, ToolName, ToolOutput,
 };
-use crate::forge_template::Element;
+use crate::template::Element;
 use futures::StreamExt;
 use tokio::sync::RwLock;
 

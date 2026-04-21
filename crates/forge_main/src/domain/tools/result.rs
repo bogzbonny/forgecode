@@ -1,5 +1,5 @@
 use derive_setters::Setters;
-use crate::forge_template::Element;
+use crate::template::Element;
 use serde::{Deserialize, Serialize};
 
 use crate::domain::{ConversationId, Image, ToolCallFull, ToolCallId, ToolName};

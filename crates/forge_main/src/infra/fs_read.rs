@@ -22,7 +22,7 @@ impl ForgeFileReadService {
 #[async_trait::async_trait]
 impl FileReaderInfra for ForgeFileReadService {
     async fn read_utf8(&self, path: &Path) -> Result<String> {
-        crate::forge_fs::ForgeFS::read_utf8(path).await
+        crate::fs::ForgeFS::read_utf8(path).await
     }
 
     fn read_batch_utf8(
@@ -48,7 +48,7 @@ impl FileReaderInfra for ForgeFileReadService {
     }
 
     async fn read(&self, path: &Path) -> Result<Vec<u8>> {
-        crate::forge_fs::ForgeFS::read(path).await
+        crate::fs::ForgeFS::read(path).await
     }
 
     async fn range_read_utf8(
@@ -57,7 +57,7 @@ impl FileReaderInfra for ForgeFileReadService {
         start_line: u64,
         end_line: u64,
     ) -> Result<(String, crate::domain::FileInfo)> {
-        crate::forge_fs::ForgeFS::read_range_utf8(path, start_line, end_line).await
+        crate::fs::ForgeFS::read_range_utf8(path, start_line, end_line).await
     }
 }
 

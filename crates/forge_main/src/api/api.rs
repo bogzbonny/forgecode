@@ -4,7 +4,7 @@ use anyhow::Result;
 use crate::app::dto::ToolsOverview;
 use crate::app::{User, UserUsage};
 use crate::domain::{Agent, AgentId, AgentInfo, AnyProvider, AuthContextRequest, AuthContextResponse, AuthMethod, ChatRequest, ChatResponse, Command, CommandOutput, CompactionResult, Conversation, ConversationId, DataGenerationParameters, Effort, Environment, McpConfig, Model, ModelId, Provider, ProviderId, ProviderModels, Scope, Skill, UserPrompt};
-use crate::forge_stream::MpscStream;
+use crate::stream::MpscStream;
 use futures::stream::BoxStream;
 use url::Url;
 
@@ -12,7 +12,7 @@ use url::Url;
 pub trait API: Sync + Send {
     /// Provides a list of files in the current working directory for auto
     /// completion
-    async fn discover(&self) -> Result<Vec<crate::forge_walker::File>>;
+    async fn discover(&self) -> Result<Vec<crate::walker::File>>;
 
     /// Provides information about the tools available in the current
     /// environment

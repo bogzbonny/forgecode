@@ -4,7 +4,7 @@ use anyhow::Result;
 use chrono::Local;
 use crate::config::ForgeConfig;
 use crate::domain::*;
-use crate::forge_stream::MpscStream;
+use crate::stream::MpscStream;
 
 use crate::app::apply_tunable_parameters::ApplyTunableParameters;
 use crate::app::changed_files::ChangedFiles;

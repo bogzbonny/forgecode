@@ -277,7 +277,7 @@ pub trait WorkspaceService: Send + Sync {
     async fn sync_workspace(
         &self,
         path: PathBuf,
-    ) -> anyhow::Result<crate::forge_stream::MpscStream<anyhow::Result<SyncProgress>>>;
+    ) -> anyhow::Result<crate::stream::MpscStream<anyhow::Result<SyncProgress>>>;
 
     /// Query the indexed workspace with semantic search
     async fn query_workspace(
@@ -1014,7 +1014,7 @@ impl<I: Services> WorkspaceService for I {
     async fn sync_workspace(
         &self,
         path: PathBuf,
-    ) -> anyhow::Result<crate::forge_stream::MpscStream<anyhow::Result<SyncProgress>>> {
+    ) -> anyhow::Result<crate::stream::MpscStream<anyhow::Result<SyncProgress>>> {
         self.workspace_service().sync_workspace(path).await
     }
 

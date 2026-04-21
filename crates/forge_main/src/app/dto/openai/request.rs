@@ -2,7 +2,7 @@ use std::vec;
 
 use derive_more::derive::Display;
 use derive_setters::Setters;
-use crate::forge_json_repair::coerce_to_schema;
+use crate::json_repair::coerce_to_schema;
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 

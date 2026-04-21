@@ -15,7 +15,7 @@ use crate::domain::{Agent, ConsoleWriter, *};
 use crate::infra::ForgeInfra;
 use crate::repo::ForgeRepo;
 use crate::services::ForgeServices;
-use crate::forge_stream::MpscStream;
+use crate::stream::MpscStream;
 use futures::stream::BoxStream;
 use url::Url;
 
@@ -70,13 +70,13 @@ impl<
         + GrpcInfra,
 > API for ForgeAPI<A, F>
 {
-    async fn discover(&self) -> Result<Vec<crate::forge_walker::File>> {
+    async fn discover(&self) -> Result<Vec<crate::walker::File>> {
         let environment = self.services.get_environment();
         let config = Walker::unlimited().cwd(environment.cwd);
         let files = self.services.collect_files(config).await?;
         Ok(files
             .into_iter()
-            .map(|f| crate::forge_walker::File {
+            .map(|f| crate::walker::File {
                 path: f.path,
                 file_name: None,
                 size: 0,

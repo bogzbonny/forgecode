@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use anyhow::Result;
 use colored::Colorize;
 use crate::domain::ConsoleWriter;
-use crate::forge_markdown_stream::StreamdownRenderer;
+use crate::markdown_stream::StreamdownRenderer;
 use crate::spinner::SpinnerManager;
 
 /// Shared spinner wrapper that encapsulates locking for thread-safe spinner

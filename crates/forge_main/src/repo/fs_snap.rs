@@ -25,12 +25,12 @@ impl SnapshotService {
         // Create intermediary directories if they don't exist
         let snapshot_path = snapshot.snapshot_path(Some(self.snapshots_directory.clone()));
         if let Some(parent) = PathBuf::from(&snapshot_path).parent() {
-            crate::forge_fs::ForgeFS::create_dir_all(parent).await?;
+            crate::fs::ForgeFS::create_dir_all(parent).await?;
         }
 
-        let content = crate::forge_fs::ForgeFS::read(&snapshot.path).await?;
+        let content = crate::fs::ForgeFS::read(&snapshot.path).await?;
         let path = snapshot.snapshot_path(Some(self.snapshots_directory.clone()));
-        crate::forge_fs::ForgeFS::write(path, content).await?;
+        crate::fs::ForgeFS::write(path, content).await?;
         Ok(snapshot)
     }
 
@@ -39,7 +39,7 @@ impl SnapshotService {
     async fn find_recent_snapshot(snapshot_dir: &PathBuf) -> Result<Option<PathBuf>> {
         let mut latest_path = None;
         let mut latest_filename = None;
-        let mut dir = crate::forge_fs::ForgeFS::read_dir(&snapshot_dir).await?;
+        let mut dir = crate::fs::ForgeFS::read_dir(&snapshot_dir).await?;
 
         while let Some(entry) = dir.next_entry().await? {
             let filename = entry.file_name().to_string_lossy().to_string();
@@ -61,7 +61,7 @@ impl SnapshotService {
         let snapshot_dir = self.snapshots_directory.join(snapshot.path_hash());
 
         // Check if the `snapshot_dir` exists
-        if !crate::forge_fs::ForgeFS::exists(&snapshot_dir) {
+        if !crate::fs::ForgeFS::exists(&snapshot_dir) {
             return Err(anyhow::anyhow!("No snapshots found for {path:?}"));
         }
 
@@ -71,11 +71,11 @@ impl SnapshotService {
             .context(format!("No valid snapshots found for {path:?}"))?;
 
         // Restore the content
-        let content = crate::forge_fs::ForgeFS::read(&snapshot_path).await?;
-        crate::forge_fs::ForgeFS::write(&path, content).await?;
+        let content = crate::fs::ForgeFS::read(&snapshot_path).await?;
+        crate::fs::ForgeFS::write(&path, content).await?;
 
         // Remove the used snapshot
-        crate::forge_fs::ForgeFS::remove_file(&snapshot_path).await?;
+        crate::fs::ForgeFS::remove_file(&snapshot_path).await?;
 
         Ok(())
     }

@@ -7,7 +7,7 @@
 //! # Example
 //!
 //! ```no_run
-//! use crate::forge_markdown_stream::StreamdownRenderer;
+//! use crate::markdown_stream::StreamdownRenderer;
 //! use std::io;
 //!
 //! fn main() -> io::Result<()> {

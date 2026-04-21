@@ -16,10 +16,10 @@ impl ForgeFileWriteService {
 
     /// Creates parent directories for the given file path if they don't exist
     async fn create_parent_dirs(&self, path: &Path) -> anyhow::Result<()> {
-        if !crate::forge_fs::ForgeFS::exists(path)
+        if !crate::fs::ForgeFS::exists(path)
             && let Some(parent) = path.parent()
         {
-            crate::forge_fs::ForgeFS::create_dir_all(parent).await?;
+            crate::fs::ForgeFS::create_dir_all(parent).await?;
         }
         Ok(())
     }
@@ -35,12 +35,12 @@ impl Default for ForgeFileWriteService {
 impl FileWriterInfra for ForgeFileWriteService {
     async fn write(&self, path: &Path, contents: Bytes) -> anyhow::Result<()> {
         self.create_parent_dirs(path).await?;
-        Ok(crate::forge_fs::ForgeFS::write(path, contents.to_vec()).await?)
+        Ok(crate::fs::ForgeFS::write(path, contents.to_vec()).await?)
     }
 
     async fn append(&self, path: &Path, contents: Bytes) -> anyhow::Result<()> {
         self.create_parent_dirs(path).await?;
-        Ok(crate::forge_fs::ForgeFS::append(path, contents.to_vec()).await?)
+        Ok(crate::fs::ForgeFS::append(path, contents.to_vec()).await?)
     }
 
     async fn write_temp(&self, prefix: &str, ext: &str, content: &str) -> anyhow::Result<PathBuf> {

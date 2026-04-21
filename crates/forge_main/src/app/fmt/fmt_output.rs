@@ -94,7 +94,7 @@ mod tests {
             },
             output: ReadOutput {
                 content: Content::file(content),
-                info: FileInfo::new(1, 1, 5, crate::forge_fs::ForgeFS::compute_hash(content)),
+                info: FileInfo::new(1, 1, 5, crate::fs::ForgeFS::compute_hash(content)),
             },
         };
         let env = fixture_environment();
@@ -117,7 +117,7 @@ mod tests {
             },
             output: ReadOutput {
                 content: Content::file(content),
-                info: FileInfo::new(2, 4, 10, crate::forge_fs::ForgeFS::compute_hash(content)),
+                info: FileInfo::new(2, 4, 10, crate::fs::ForgeFS::compute_hash(content)),
             },
         };
         let env = fixture_environment();
@@ -141,7 +141,7 @@ mod tests {
                 path: "/home/user/project/new_file.txt".to_string(),
                 before: None,
                 errors: vec![],
-                content_hash: crate::forge_fs::ForgeFS::compute_hash(content),
+                content_hash: crate::fs::ForgeFS::compute_hash(content),
             },
         };
         let env = fixture_environment();
@@ -165,7 +165,7 @@ mod tests {
                 path: "/home/user/project/existing_file.txt".to_string(),
                 before: Some("old content".to_string()),
                 errors: vec![],
-                content_hash: crate::forge_fs::ForgeFS::compute_hash(content),
+                content_hash: crate::fs::ForgeFS::compute_hash(content),
             },
         };
         let env = fixture_environment();
@@ -197,7 +197,7 @@ mod tests {
                     column: 10,
                     message: "Syntax error".to_string(),
                 }],
-                content_hash: crate::forge_fs::ForgeFS::compute_hash(content),
+                content_hash: crate::fs::ForgeFS::compute_hash(content),
             },
         };
         let env = fixture_environment();
@@ -312,7 +312,7 @@ mod tests {
                 errors: vec![],
                 before: "Hello world\nThis is a test".to_string(),
                 after: after_content.to_string(),
-                content_hash: crate::forge_fs::ForgeFS::compute_hash(after_content),
+                content_hash: crate::fs::ForgeFS::compute_hash(after_content),
             },
         };
         let env = fixture_environment();
@@ -339,7 +339,7 @@ mod tests {
                 }],
                 before: "line1\nline2".to_string(),
                 after: after_content.to_string(),
-                content_hash: crate::forge_fs::ForgeFS::compute_hash(after_content),
+                content_hash: crate::fs::ForgeFS::compute_hash(after_content),
             },
         };
         let env = fixture_environment();

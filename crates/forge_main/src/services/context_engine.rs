@@ -9,7 +9,7 @@ use crate::domain::{
     AuthCredential, AuthDetails, ProviderId, ProviderRepository, SyncProgress, UserId, WorkspaceId,
     WorkspaceIndexRepository,
 };
-use crate::forge_stream::MpscStream;
+use crate::stream::MpscStream;
 use futures::future::join_all;
 use tracing::info;
 

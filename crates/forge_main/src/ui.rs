@@ -20,10 +20,10 @@ use crate::display::MarkdownFormat;
 use crate::domain::{
     AuthMethod, ChatResponseContent, ConsoleWriter, ContextMessage, Role, TitleFormat, UserCommand,
 };
-use crate::forge_fs::ForgeFS;
+use crate::fs::ForgeFS;
 use crate::select::ForgeWidget;
 use crate::spinner::SpinnerManager;
-use crate::forge_walker::Walker;
+use crate::walker::Walker;
 use futures::future;
 use strum::IntoEnumIterator;
 use tokio_stream::StreamExt;

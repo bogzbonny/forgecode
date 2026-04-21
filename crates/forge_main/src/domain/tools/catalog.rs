@@ -1159,7 +1159,7 @@ impl TryFrom<ToolCallFull> for ToolCatalog {
             .find(|tool| tool.definition().name == normalized_name)
             .map(|tool| {
                 let schema = tool.definition().input_schema;
-                crate::forge_json_repair::coerce_to_schema(parsed_args.clone(), &schema)
+                crate::json_repair::coerce_to_schema(parsed_args.clone(), &schema)
             })
             .unwrap_or(parsed_args);
 

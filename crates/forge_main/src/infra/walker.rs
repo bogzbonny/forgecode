@@ -9,7 +9,7 @@ impl ForgeWalkerService {
     }
 
     pub async fn walk(&self, config: Walker) -> Result<Vec<WalkedFile>> {
-        // Convert domain config to forge_walker config
+        // Convert domain config to walker config
         let mut walker = if config.max_depth.is_none()
             && config.max_breadth.is_none()
             && config.max_file_size.is_none()
@@ -17,9 +17,9 @@ impl ForgeWalkerService {
             && config.max_total_size.is_none()
         {
             // Agent-facing walker: keep hidden files excluded by default.
-            crate::forge_walker::Walker::max_all().hidden(true)
+            crate::walker::Walker::max_all().hidden(true)
         } else {
-            crate::forge_walker::Walker::min_all()
+            crate::walker::Walker::min_all()
         };
 
         walker = walker.cwd(config.cwd);

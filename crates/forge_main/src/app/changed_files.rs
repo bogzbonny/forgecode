@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::domain::{Agent, ContextMessage, Conversation, Role, TextMessage};
-use crate::forge_template::Element;
+use crate::template::Element;
 
 use crate::app::utils::format_display_path;
 use crate::app::{EnvironmentInfra, FsReadService};
@@ -192,7 +192,7 @@ mod tests {
     #[tokio::test]
     async fn test_no_changes_detected() {
         let content = "hello world";
-        let hash = crate::forge_fs::ForgeFS::compute_hash(content);
+        let hash = crate::fs::ForgeFS::compute_hash(content);
 
         let (service, mut conversation) = fixture(
             [("/test/file.txt".into(), content.into())].into(),
@@ -212,7 +212,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_changes_detected_adds_notification() {
-        let old_hash = crate::forge_fs::ForgeFS::compute_hash("old content");
+        let old_hash = crate::fs::ForgeFS::compute_hash("old content");
         let new_content = "new content";
 
         let (service, conversation) = fixture(
@@ -231,9 +231,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_updates_content_hash() {
-        let old_hash = crate::forge_fs::ForgeFS::compute_hash("old content");
+        let old_hash = crate::fs::ForgeFS::compute_hash("old content");
         let new_content = "new content";
-        let new_hash = crate::forge_fs::ForgeFS::compute_hash(new_content);
+        let new_hash = crate::fs::ForgeFS::compute_hash(new_content);
 
         let (service, conversation) = fixture(
             [("/test/file.txt".into(), new_content.into())].into(),
@@ -260,8 +260,8 @@ mod tests {
             ]
             .into(),
             [
-                ("/test/file1.txt".into(), Some(crate::forge_fs::ForgeFS::compute_hash("old 1"))),
-                ("/test/file2.txt".into(), Some(crate::forge_fs::ForgeFS::compute_hash("old 2"))),
+                ("/test/file1.txt".into(), Some(crate::fs::ForgeFS::compute_hash("old 1"))),
+                ("/test/file2.txt".into(), Some(crate::fs::ForgeFS::compute_hash("old 2"))),
             ]
             .into(),
         );
@@ -278,7 +278,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_uses_relative_paths_within_cwd() {
-        let old_hash = crate::forge_fs::ForgeFS::compute_hash("old content");
+        let old_hash = crate::fs::ForgeFS::compute_hash("old content");
         let new_content = "new content";
         let cwd = PathBuf::from("/home/user/project");
         let absolute_path = "/home/user/project/src/main.rs";

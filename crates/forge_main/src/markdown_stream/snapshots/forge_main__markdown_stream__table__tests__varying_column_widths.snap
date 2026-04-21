@@ -1,0 +1,9 @@
+---
+source: crates/forge_main/src/markdown_stream/table.rs
+expression: "render(vec![vec![\"Short\", \"Much Longer Header\"], vec![\"a\", \"b\"],])"
+---
+  ┌───────┬────────────────────┐
+  │ Short │ Much Longer Header │
+  ├───────┼────────────────────┤
+  │ a     │ b                  │
+  └───────┴────────────────────┘

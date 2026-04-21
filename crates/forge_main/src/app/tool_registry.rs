@@ -8,7 +8,7 @@ use crate::domain::{
     Model, SystemContext, TemplateConfig, ToolCallContext, ToolCallFull, ToolCatalog,
     ToolDefinition, ToolKind, ToolName, ToolOutput, ToolResult,
 };
-use crate::forge_template::Element;
+use crate::template::Element;
 use futures::future::join_all;
 use serde_json::{Map, Value, json};
 use strum::IntoEnumIterator;

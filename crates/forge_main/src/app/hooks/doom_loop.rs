@@ -4,7 +4,7 @@ use crate::domain::{
     ContextMessage, Conversation, EventData, EventHandle, RequestPayload, Role, TextMessage,
     ToolCallArguments, ToolName,
 };
-use crate::forge_template::Element;
+use crate::template::Element;
 use tracing::warn;
 
 use crate::app::TemplateEngine;

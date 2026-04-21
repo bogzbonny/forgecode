@@ -1029,7 +1029,7 @@ mod tests {
     fn test_coerce_multi_patch_python_style() {
         // Test coercing exact Python-style input from error
         // This matches multi_patch tool call format with nested objects
-        let python_style = r#"[{'content': 'use schemars::schema::{InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec};', 'operation': 'replace', 'path': 'crates/forge_json_repair/src/schema_coercion.rs'}, {'content': 'fn coerce_value_with_schema(value: Value, schema: &Schema) -> Value {', 'operation': 'replace', 'path': 'crates/forge_json_repair/src/schema_coercion.rs'}]"#;
+        let python_style = r#"[{'content': 'use schemars::schema::{InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec};', 'operation': 'replace', 'path': 'crates/json_repair/src/schema_coercion.rs'}, {'content': 'fn coerce_value_with_schema(value: Value, schema: &Schema) -> Value {', 'operation': 'replace', 'path': 'crates/json_repair/src/schema_coercion.rs'}]"#;
 
         let fixture = json!({"edits": python_style});
         let schema = schema_for!(MultiPatchData);
@@ -1048,7 +1048,7 @@ mod tests {
         assert_eq!(edits[0]["operation"], "replace");
         assert_eq!(
             edits[0]["path"],
-            "crates/forge_json_repair/src/schema_coercion.rs"
+            "crates/json_repair/src/schema_coercion.rs"
         );
 
         // Verify second edit object
@@ -1059,7 +1059,7 @@ mod tests {
         assert_eq!(edits[1]["operation"], "replace");
         assert_eq!(
             edits[1]["path"],
-            "crates/forge_json_repair/src/schema_coercion.rs"
+            "crates/json_repair/src/schema_coercion.rs"
         );
     }
 
@@ -1131,7 +1131,7 @@ mod tests {
         let malformed = r#"{"tasks": "[\"Find main function\"]{\n}"}"#;
 
         // First repair the JSON structure
-        let repaired: Value = crate::forge_json_repair::json_repair(malformed).expect("Should repair JSON");
+        let repaired: Value = crate::json_repair::json_repair(malformed).expect("Should repair JSON");
 
         // Then coerce to schema
         let schema = schema_for!(AgentInput);

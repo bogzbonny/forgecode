@@ -225,14 +225,14 @@ impl ToolCallFull {
 
 fn json_repair_parse<T>(
     json_str: &str,
-) -> std::result::Result<T, crate::forge_json_repair::JsonRepairError>
+) -> std::result::Result<T, crate::json_repair::JsonRepairError>
 where
     T: serde::de::DeserializeOwned,
 {
     serde_json::from_str(json_str)
-        .map_err(crate::forge_json_repair::JsonRepairError::JsonError)
+        .map_err(crate::json_repair::JsonRepairError::JsonError)
         .or_else(|_| {
-            let repaired = crate::forge_json_repair::json_repair(json_str);
+            let repaired = crate::json_repair::json_repair(json_str);
             if repaired.is_ok() {
                 tracing::info!("Tool call was successfully repaired.");
             }

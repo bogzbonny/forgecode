@@ -392,7 +392,7 @@ impl<F: FileWriterInfra + SnapshotRepository + ValidationRepository + FuzzySearc
         };
 
         // Read the original content once
-        // TODO: use forge_fs
+        // TODO: use fs
         let mut current_content = fs::read_to_string(path)
             .await
             .map_err(Error::FileOperation)?;

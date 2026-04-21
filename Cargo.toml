@@ -136,3 +136,4 @@ gix = "0.81"
 
 # Internal crates
 forge_main = { path = "crates/forge_main" }
+forge_tool_macros = { path = "crates/forge_tool_macros" }

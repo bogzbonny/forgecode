@@ -18,6 +18,6 @@ impl ForgeFileRemoveService {
 #[async_trait::async_trait]
 impl FileRemoverInfra for ForgeFileRemoveService {
     async fn remove(&self, path: &Path) -> anyhow::Result<()> {
-        Ok(crate::forge_fs::ForgeFS::remove_file(path).await?)
+        Ok(crate::fs::ForgeFS::remove_file(path).await?)
     }
 }

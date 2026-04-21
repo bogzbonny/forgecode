@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::select::ForgeWidget;
-use crate::forge_walker::Walker;
+use crate::walker::Walker;
 use reedline::{Completer, Span, Suggestion};
 
 use crate::completer::CommandCompleter;

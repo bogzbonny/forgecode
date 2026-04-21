@@ -66,7 +66,7 @@ where
         };
 
         // Build user prompt with task.
-        use crate::forge_template::Element;
+        use crate::template::Element;
         let task_elm = Element::new("task").text(prompt.as_str());
         let user_content = task_elm.render();
 

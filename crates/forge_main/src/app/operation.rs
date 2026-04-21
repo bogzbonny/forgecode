@@ -10,7 +10,7 @@ use crate::domain::{
     CodebaseSearchResults, Environment, FSMultiPatch, FSPatch, FSRead, FSRemove, FSSearch, FSUndo,
     FSWrite, FileOperation, LineNumbers, Metrics, NetFetch, PlanCreate, ToolKind,
 };
-use crate::forge_template::Element;
+use crate::template::Element;
 
 use crate::app::truncation::{
     Stderr, Stdout, TruncationMode, truncate_fetch_content, truncate_search_output,
@@ -857,7 +857,7 @@ mod tests {
     #[test]
     fn test_fs_read_basic() {
         let content = "Hello, world!\nThis is a test file.";
-        let hash = crate::forge_fs::ForgeFS::compute_hash(content);
+        let hash = crate::fs::ForgeFS::compute_hash(content);
         let fixture = ToolOperation::FsRead {
             input: FSRead {
                 file_path: "/home/user/test.txt".to_string(),
@@ -888,7 +888,7 @@ mod tests {
     #[test]
     fn test_fs_read_basic_special_chars() {
         let content = "struct Foo<T>{ name: T }";
-        let hash = crate::forge_fs::ForgeFS::compute_hash(content);
+        let hash = crate::fs::ForgeFS::compute_hash(content);
         let fixture = ToolOperation::FsRead {
             input: FSRead {
                 file_path: "/home/user/test.txt".to_string(),
@@ -918,7 +918,7 @@ mod tests {
     #[test]
     fn test_fs_read_with_explicit_range() {
         let content = "Line 1\nLine 2\nLine 3";
-        let hash = crate::forge_fs::ForgeFS::compute_hash(content);
+        let hash = crate::fs::ForgeFS::compute_hash(content);
         let fixture = ToolOperation::FsRead {
             input: FSRead {
                 file_path: "/home/user/test.txt".to_string(),
@@ -949,7 +949,7 @@ mod tests {
     #[test]
     fn test_fs_read_with_truncation_path() {
         let content = "Truncated content";
-        let hash = crate::forge_fs::ForgeFS::compute_hash(content);
+        let hash = crate::fs::ForgeFS::compute_hash(content);
         let fixture = ToolOperation::FsRead {
             input: FSRead {
                 file_path: "/home/user/large_file.txt".to_string(),

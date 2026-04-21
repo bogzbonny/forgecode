@@ -1,0 +1,7 @@
+---
+source: crates/forge_main/src/markdown_stream/table.rs
+expression: "render(vec![vec![\"Only\", \"Headers\"],])"
+---
+  ┌──────┬─────────┐
+  │ Only │ Headers │
+  └──────┴─────────┘
