@@ -63,7 +63,10 @@ async fn test_rendered_user_message() {
 }
 
 #[tokio::test]
-async fn test_followup_does_not_trigger_session_summary() {
+async fn test_followup_continues_conversation() {
+    // Test: After the LLM calls followup, the orchestrator should continue the
+    // loop with the user's answer in context, allowing the LLM to respond and
+    // complete the task.
     let followup_call = ToolCallFull::new("followup")
         .arguments(json!({"question": "Do you need more information?"}));
     let followup_result =
@@ -80,18 +83,33 @@ async fn test_followup_does_not_trigger_session_summary() {
 
     ctx.run("Ask a follow-up question").await.unwrap();
 
-    let has_chat_complete = ctx
+    let chat_responses: Vec<_> = ctx
         .output
         .chat_responses
         .iter()
-        .flatten()
-        .any(|response| matches!(response, ChatResponse::TaskComplete));
+        .filter_map(|r| r.as_ref().ok())
+        .collect();
 
-    assert!(!ctx.output.tools().is_empty(), "Context should've tools.");
+    // TaskComplete should now be sent after the orchestrator continues
+    // and the LLM completes with FinishReason::Stop
+    let has_chat_complete = chat_responses
+        .iter()
+        .any(|response| matches!(response, ChatResponse::TaskComplete));
     assert!(
-        !has_chat_complete,
-        "Should NOT have TaskComplete response for followup"
+        has_chat_complete,
+        "Should have TaskComplete after followup continuation"
     );
+
+    // Context should still have the followup tool call
+    assert!(!ctx.output.tools().is_empty(), "Context should've tools.");
+
+    // Should have 2 assistant messages (one with followup, one completing)
+    let messages = ctx.output.context_messages();
+    let assistant_count = messages
+        .iter()
+        .filter(|m| m.has_role(Role::Assistant))
+        .count();
+    assert_eq!(assistant_count, 2, "Should have 2 assistant messages");
 }
 
 #[tokio::test]

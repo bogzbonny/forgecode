@@ -246,6 +246,9 @@ impl<S: AgentService + EnvironmentInfra<Config = crate::config::ForgeConfig>> Or
         // Signals that the task is completed
         let mut is_complete = false;
 
+        // Signals that the yield is due to a followup tool call (should continue after tool result)
+        let mut followup_yield = false;
+
         let mut request_count = 0;
 
         // Retrieve the number of requests allowed per tick.
@@ -312,11 +315,11 @@ impl<S: AgentService + EnvironmentInfra<Config = crate::config::ForgeConfig>> Or
                 message.finish_reason == Some(FinishReason::Stop) && message.tool_calls.is_empty();
 
             // Should yield if a tool is asking for a follow-up
-            should_yield = is_complete
-                || message
-                    .tool_calls
-                    .iter()
-                    .any(|call| ToolCatalog::should_yield(&call.name));
+            followup_yield = message
+                .tool_calls
+                .iter()
+                .any(|call| ToolCatalog::should_yield(&call.name));
+            should_yield = is_complete || followup_yield;
 
             // Process tool calls and update context
             let mut tool_call_records = self
@@ -405,33 +408,40 @@ impl<S: AgentService + EnvironmentInfra<Config = crate::config::ForgeConfig>> Or
             // If completing (should_yield is due), fire End hook and check if
             // it adds messages
             if should_yield {
-                let end_count_before = self.conversation.len();
-                self.hook
-                    .handle(
-                        &LifecycleEvent::End(EventData::new(
-                            self.agent.clone(),
-                            model_id.clone(),
-                            EndPayload,
-                        )),
-                        &mut self.conversation,
-                    )
-                    .await?;
-                self.services.update(self.conversation.clone()).await?;
-                // Check if End hook added messages - if so, continue the loop
-                if self.conversation.len() > end_count_before {
-                    // End hook added messages, sync context and continue
-                    if let Some(updated_context) = &self.conversation.context {
-                        context = updated_context.clone();
-                    }
+                // For followup yields, always continue the loop — the updated context
+                // (which now includes the user's answer from the tool result) will be
+                // sent back to the LLM in the next iteration.
+                if followup_yield {
                     should_yield = false;
+                } else {
+                    let end_count_before = self.conversation.len();
+                    self.hook
+                        .handle(
+                            &LifecycleEvent::End(EventData::new(
+                                self.agent.clone(),
+                                model_id.clone(),
+                                EndPayload,
+                            )),
+                            &mut self.conversation,
+                        )
+                        .await?;
+                    self.services.update(self.conversation.clone()).await?;
+                    // Check if End hook added messages - if so, continue the loop
+                    if self.conversation.len() > end_count_before {
+                        // End hook added messages, sync context and continue
+                        if let Some(updated_context) = &self.conversation.context {
+                            context = updated_context.clone();
+                        }
+                        should_yield = false;
+                    }
                 }
             }
         }
 
         self.services.update(self.conversation.clone()).await?;
 
-        // Signal Task Completion
-        if is_complete {
+        // Signal Task Completion (only if not a followup yield)
+        if is_complete && !followup_yield {
             self.send(ChatResponse::TaskComplete).await?;
         }
 
